@@ -1,0 +1,4 @@
+[submodule "maat-scripts"]
+	path = maat-scripts
+	url = https://github.com/adamtornhill/maat-scripts.git
+	branch = python3
