@@ -34,17 +34,25 @@ Follow the installation instructions at https://github.com/AlDanial/cloc.
 
 ## Usage
 
-This repository assumes it is a sibling directory of the source repositories you wish to analyse. To run an analysis, call a make recipe, substituting the name of the repository you wish to analyse. All examples below use `my-repo` as an example.
+### Recipes
 
-File change history is cached (per repository) between executions. To clear the cache for a repository, run `make clean-[repo]`, e.g. `make clean-my-repo`. To clear the cache for all repositories, run `make clean`.
+This repository assumes it is a sibling directory of the source repositories you wish to analyse. To run an analysis, call a `make` recipe, substituting the name of the repository you wish to analyse. All examples below use `my-repo` as an example.
 
-### Summary of activity
+#### Summary of activity
 Reports number of files, number of changes to files and number of authors involved during the specified time frame.
 ```shell
 make my-repo-change-summary from=<YYYY-MM-DD> to=<YYYY-MM-DD>
 ```
 
-### Interactive hotspot diagram
+#### Change frequency
+Print how many commits each file has appeared in during the specified time period.
+```shell
+make my-repo-change-frequency from=<YYYY-MM-DD> to=<YYYY-MM-DD> [groups]
+```
+Notes:
+- See [Architectural analysis](#architectural-analysis) for explanation of `groups` parameter
+
+#### Interactive hotspot diagram
 Opens an interactive "circle packing" diagram showing code files, with highlighted red hotspots. The larger the circle, the more lines of code (a rough proxy for complexity). The darker the circle, the higher the frequency of change (correlates with deminishing quality and higher defect rate).
 ```shell
 make my-repo-hotspots from=<YYYY-MM-DD> to=<YYYY-MM-DD> langs="<comma-separated language list>" excludeDirs="<excluded directory regex>"
@@ -53,14 +61,14 @@ Notes:
 - Valid values for `langs` can be listed by running `cloc --show-lang`. Examples include `PHP`, `JavaScript` and `TypeScript`.
 - `excludeDirs` takes a regex expression that is matched against the full path of each file's containing directory. Use `|` between alternative paths you wish to exclude. At a minimum, you should always exclude the path to third party libraries (e.g. `/node_modules/` in JavaScript or `./src/vendor` in PHP).  
 
-### Hotspot table
+#### Hotspot table
 Prints a CSV of code files, sorted by frequency of change, and reporting the current number of lines of code and the number of changes in the specified time frame.
 ```shell
 make my-repo-hotspots-table from=<YYYY-MM-DD> to=<YYYY-MM-DD> langs="<comma-separated language list>" excludeDirs="<excluded directory regex>"
 ```
 See [Interactive hotspot diagram](#interactive-hotspot-diagram) for details of parameter usage.
 
-### File complexity
+#### File complexity
 Prints a single-row CSV of the `total`, `mean`, `standard deviation` and `maximum` number of indentations (tab or 4 spaces) in a specified file.
 
 Number of indentations is a useful proxy for complexity as it is correlated with the level of code nesting (e.g. nested `if` clauses). A high `maximum` (e.g. `6`) indicates areas of excessive complexity. If the `mean` is also high, the file may suffer from rampant complexity.
@@ -68,7 +76,7 @@ Number of indentations is a useful proxy for complexity as it is correlated with
 make my-repo-indentation file=<path to file relative to base of target repo>
 ```
 
-### File complexity trend
+#### File complexity trend
 Generates and prints a CSV file for the specified code file, containing a row per commit over the specified time interval. Each row includes the `total`, `mean` and `standard deviation` number of indentations (tab or 4 spaces) at that point in time.
 
 Number of indentations is a useful proxy for complexity as it is correlated with the level of code nesting (e.g. nested `if` clauses).
@@ -80,16 +88,18 @@ After generating the CSV file, paste it into your favourite spreadsheet software
 make my-repo-indentation-trend from=<YYYY-MM-DD> to=<YYYY-MM-DD> file=<path to file relative to base of target repo>
 ```
 
-### Sum of coupling
+#### Sum of coupling
 For each file, prints the number of times other files changed alongside it in the same commit
 ```shell
-make my-repo-sum-of-coupling from=<YYYY-MM-DD> to=<YYYY-MM-DD>
+make my-repo-sum-of-coupling from=<YYYY-MM-DD> to=<YYYY-MM-DD> [groups]
 ```
+Notes:
+- See [Architectural analysis](#architectural-analysis) for explanation of `groups` parameter
 
-### Coupling
+#### Coupling
 For pairs of files, prints the % of shared commits and an average their respective number of commits
 ```shell
-make my-repo-coupling from=<YYYY-MM-DD> to=<YYYY-MM-DD> [minRevisions=5] [minSharedRevisions=5] [minCoupling=30]
+make my-repo-coupling from=<YYYY-MM-DD> to=<YYYY-MM-DD> [minRevisions=5] [minSharedRevisions=5] [minCoupling=30] [groups]
 ```
 Notes:
 - The higher the average number of commits, the more we can rely on the reported % to inform our expectations about the future degree of coupling between these files.
@@ -97,3 +107,16 @@ Notes:
   - `minRevisions` filters out files that have fewer total commits
   - `minSharedRevisions` filters out pairs that have fewer total shared commits
   - `minCoupling` filters out pairs that have a lower degree of coupling
+- See [Architectural analysis](#architectural-analysis) for explanation of `groups` parameter
+
+### Architectural analysis
+
+Instead of performing an analysis per file, you can define groups of files and analyse at the level of system layers or other architectural constructs. Specify how you wish to group files using the `groups` argument. For example:
+
+``groups="src/app => Code; src/tests/acceptance => AcceptanceTest; src/tests/api => ApiTest; src/tests/functional => FunctionalTest; src/tests/unit => UnitTest; ansible => Infrastructure""``
+
+Groups can also be defined in terms of exact-match regex patterns, e.g. `^src/apps/([^/]+/)*[^\.]+\.js\$$`. Note: double `$` due to behaviour of `make`
+
+### Caching
+
+File change history is cached (per repository) between executions. To clear the cache for a repository, run `make clean-[repo]`, e.g. `make clean-my-repo`. To clear the cache for all repositories, run `make clean`.
