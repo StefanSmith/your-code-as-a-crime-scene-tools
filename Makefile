@@ -9,6 +9,10 @@ minRevisions=5
 minCoupling=30
 minSharedRevisions=5
 
+clean:
+	rm -rf "data"
+	rm -rf "enclosure-diagram/data"
+
 clean-%:
 	rm -rf "data/$*"
 	rm -rf "enclosure-diagram/data/$*"
