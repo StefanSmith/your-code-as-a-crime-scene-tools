@@ -36,7 +36,7 @@ Follow the installation instructions at https://github.com/AlDanial/cloc.
 
 This repository assumes it is a sibling directory of the source repositories you wish to analyse. To run an analysis, call a make recipe, substituting the name of the repository you wish to analyse. All examples below use `my-repo` as an example.
 
-File change history is cached (per repository) between executions and is **not** regenerated when parameter values change. To clear the cache for a repository, run `make clean-[repo]`, e.g. `make clean-my-repo`. To clear the cache for all repositories, run `make clean`.
+File change history is cached (per repository) between executions. To clear the cache for a repository, run `make clean-[repo]`, e.g. `make clean-my-repo`. To clear the cache for all repositories, run `make clean`.
 
 ### Summary of activity
 Reports number of files, number of changes to files and number of authors involved during the specified time frame.

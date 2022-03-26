@@ -1,5 +1,5 @@
 .PHONEY: clean clean-% %-change-summary %-hotspots %-hotspots-table %-sum-of-coupling %-coupling %-indentation %-indentation-trend
-.PRECIOUS: data/%/file-changes.log
+.PRECIOUS: data/%/file-changes-$(from)-$(to).log
 
 makefileDirectoryPath := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
@@ -17,8 +17,8 @@ clean-%:
 	rm -rf "data/$*"
 	rm -rf "enclosure-diagram/data/$*"
 
-%-change-summary: data/%/file-changes.log
-	maat -l "data/$*/file-changes.log" -c git2 -a summary
+%-change-summary: data/%/file-changes-$(from)-$(to).log
+	maat -l "data/$*/file-changes-$(from)-$(to).log" -c git2 -a summary
 
 %-hotspots: enclosure-diagram/data/%/code-file-lines-and-change-frequency.json
 	./scripts/open-enclosure-diagram.sh $(port) "data/$*/code-file-lines-and-change-frequency.json"
@@ -42,11 +42,11 @@ endif
 %-indentation-trend: data/%/indentation-trend.csv
 	less "data/$*/indentation-trend.csv"
 
-data/%/sum-of-coupling.csv: data/%/file-changes.log
-	maat -l "data/$*/file-changes.log" -c git2 -a soc > "$@"
+data/%/sum-of-coupling.csv: data/%/file-changes-$(from)-$(to).log
+	maat -l "data/$*/file-changes-$(from)-$(to).log" -c git2 -a soc > "$@"
 
-data/%/coupling.csv: data/%/file-changes.log
-	maat -l "data/$*/file-changes.log" -c git2 -a coupling --min-revs $(minRevisions) --min-coupling $(minCoupling) --min-shared-revs $(minSharedRevisions) > "$@"
+data/%/coupling.csv: data/%/file-changes-$(from)-$(to).log
+	maat -l "data/$*/file-changes-$(from)-$(to).log" -c git2 -a coupling --min-revs $(minRevisions) --min-coupling $(minCoupling) --min-shared-revs $(minSharedRevisions) > "$@"
 
 data/%/indentation-trend.csv:
 ifndef from
@@ -68,8 +68,8 @@ enclosure-diagram/data/%/code-file-lines-and-change-frequency.json: data/%/chang
 	mkdir -p "enclosure-diagram/data/$*"
 	cd "../$*" && python "$(makefileDirectoryPath)/maat-scripts/transform/csv_as_enclosure_json.py" --structure "$(makefileDirectoryPath)/data/$*/lines-of-code-report.csv" --weights "$(makefileDirectoryPath)/data/$*/change-frequency-report.csv" > "$(makefileDirectoryPath)/$@"
 
-data/%/change-frequency-report.csv: data/%/file-changes.log
-	maat -l "data/$*/file-changes.log" -c git2 -a revisions > "$@"
+data/%/change-frequency-report.csv: data/%/file-changes-$(from)-$(to).log
+	maat -l "data/$*/file-changes-$(from)-$(to).log" -c git2 -a revisions > "$@"
 
 data/%/lines-of-code-report.csv:
 ifndef langs
@@ -84,7 +84,7 @@ endif
 	cd "../$*" && cloc ./ --by-file --csv --quiet --include-lang="$(langs)" --fullpath --not-match-d="$(excludeDirs)" > "$(makefileDirectoryPath)/$@"
 
 # TODO: support file exclusion? Needs to be repo-agnostic
-data/%/file-changes.log:
+data/%/file-changes-$(from)-$(to).log:
 ifndef from
 	$(error from is undefined)
 endif
