@@ -83,7 +83,6 @@ endif
 	mkdir -p "data/$*"
 	cd "../$*" && cloc ./ --by-file --csv --quiet --include-lang="$(langs)" --fullpath --not-match-d="$(excludeDirs)" > "$(makefileDirectoryPath)/$@"
 
-# TODO: support file exclusion? Needs to be repo-agnostic
 data/%/file-changes-$(from)-$(to).log:
 ifndef from
 	$(error from is undefined)
