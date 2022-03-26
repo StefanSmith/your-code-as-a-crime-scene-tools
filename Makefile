@@ -1,9 +1,13 @@
 .PHONEY: clean-% %-change-summary %-hotspots %-hotspots-table %-indentation %-indentation-trend
-.PRECIOUS: data/%/file-changes.log data/%/lines-of-code-report.csv data/%/change-frequency-report.csv enclosure-diagram/data/%/code-file-lines-and-change-frequency.json data/%/indentation-trend.csv
+.PRECIOUS: data/%/file-changes.log data/%/lines-of-code-report.csv data/%/change-frequency-report.csv enclosure-diagram/data/%/code-file-lines-and-change-frequency.json data/%/indentation-trend.csv data/%/sum-of-coupling.csv data/%/coupling.csv
 
 makefileDirectoryPath := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 port=9000
+
+minRevisions=5
+minCoupling=30
+minSharedRevisions=5
 
 clean-%:
 	rm -rf "data/$*"
@@ -18,6 +22,12 @@ clean-%:
 %-hotspots-table: data/%/change-frequency-report.csv data/%/lines-of-code-report.csv
 	python maat-scripts/merge/merge_comp_freqs.py "data/$*/change-frequency-report.csv" "data/$*/lines-of-code-report.csv" | less
 
+%-sum-of-coupling: data/%/sum-of-coupling.csv
+	less "data/$*/sum-of-coupling.csv"
+
+%-coupling: data/%/coupling.csv
+	less "data/$*/coupling.csv"
+
 %-indentation:
 ifndef file
 	$(error file is undefined)
@@ -27,6 +37,12 @@ endif
 
 %-indentation-trend: data/%/indentation-trend.csv
 	@
+
+data/%/sum-of-coupling.csv: data/%/file-changes.log
+	maat -l "data/$*/file-changes.log" -c git2 -a soc > "$@"
+
+data/%/coupling.csv: data/%/file-changes.log
+	maat -l "data/$*/file-changes.log" -c git2 -a coupling --min-revs $(minRevisions) --min-coupling $(minCoupling) --min-shared-revs $(minSharedRevisions) > "$@"
 
 data/%/indentation-trend.csv:
 ifndef from

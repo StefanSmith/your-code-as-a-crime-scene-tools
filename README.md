@@ -79,3 +79,21 @@ After generating the CSV file, paste it into your favourite spreadsheet software
 ```shell
 make my-repo-indentation-trend from=<YYYY-MM-DD> to=<YYYY-MM-DD> file=<path to file relative to base of target repo>
 ```
+
+### Sum of coupling
+For each file, prints the number of times other files changed alongside it in the same commit
+```shell
+make my-repo-sum-of-coupling from=<YYYY-MM-DD> to=<YYYY-MM-DD>
+```
+
+### Coupling
+For pairs of files, prints the % of shared commits and an average their respective number of commits
+```shell
+make my-repo-coupling from=<YYYY-MM-DD> to=<YYYY-MM-DD> [minRevisions=5] [minSharedRevisions=5] [minCoupling=30]
+```
+Notes:
+- The higher the average number of commits, the more we can rely on the reported % to inform our expectations about the future degree of coupling between these files.
+- We can use optional arguments to restrict the reported pairs to those that are more significant. Default values are listed above.
+  - `minRevisions` filters out files that have fewer total commits
+  - `minSharedRevisions` filters out pairs that have fewer total shared commits
+  - `minCoupling` filters out pairs that have a lower degree of coupling
