@@ -58,14 +58,14 @@ ifndef file
 endif
 
 	mkdir -p "data/$*"
-	cd "../$*" && python "$(makefileDirectoryPath)/maat-scripts/miner/git_complexity_trend.py" --start $(shell git --git-dir ../$*/.git log --after=$(from) --pretty=format:%h --reverse | head -1) --end $(shell git --git-dir ../$*/.git log --before=$(to) --pretty=format:%h -1) --file "$(file)" > "$(makefileDirectoryPath)/data/$*/indentation-trend.csv"
+	cd "../$*" && python "$(makefileDirectoryPath)/maat-scripts/miner/git_complexity_trend.py" --start $(shell git --git-dir ../$*/.git log --after=$(from) --pretty=format:%h --reverse | head -1) --end $(shell git --git-dir ../$*/.git log --before=$(to) --pretty=format:%h -1) --file "$(file)" > "$(makefileDirectoryPath)/$@"
 
 enclosure-diagram/data/%/code-file-lines-and-change-frequency.json: data/%/change-frequency-report.csv data/%/lines-of-code-report.csv
 	mkdir -p "enclosure-diagram/data/$*"
-	cd "../$*" && python "$(makefileDirectoryPath)/maat-scripts/transform/csv_as_enclosure_json.py" --structure "$(makefileDirectoryPath)/data/$*/lines-of-code-report.csv" --weights "$(makefileDirectoryPath)/data/$*/change-frequency-report.csv" > "$(makefileDirectoryPath)/enclosure-diagram/data/$*/code-file-lines-and-change-frequency.json"
+	cd "../$*" && python "$(makefileDirectoryPath)/maat-scripts/transform/csv_as_enclosure_json.py" --structure "$(makefileDirectoryPath)/data/$*/lines-of-code-report.csv" --weights "$(makefileDirectoryPath)/data/$*/change-frequency-report.csv" > "$(makefileDirectoryPath)/$@"
 
 data/%/change-frequency-report.csv: data/%/file-changes.log
-	maat -l "data/$*/file-changes.log" -c git2 -a revisions > "data/$*/change-frequency-report.csv"
+	maat -l "data/$*/file-changes.log" -c git2 -a revisions > "$@"
 
 data/%/lines-of-code-report.csv:
 ifndef langs
