@@ -1,5 +1,5 @@
-.PHONEY: clean-% %-change-summary %-hotspots %-hotspots-table %-indentation %-indentation-trend
-.PRECIOUS: data/%/file-changes.log data/%/lines-of-code-report.csv data/%/change-frequency-report.csv enclosure-diagram/data/%/code-file-lines-and-change-frequency.json data/%/indentation-trend.csv data/%/sum-of-coupling.csv data/%/coupling.csv
+.PHONEY: clean clean-% %-change-summary %-hotspots %-hotspots-table %-sum-of-coupling %-coupling %-indentation %-indentation-trend
+.PRECIOUS: data/%/file-changes.log
 
 makefileDirectoryPath := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
