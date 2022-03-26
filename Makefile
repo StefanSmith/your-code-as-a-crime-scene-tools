@@ -36,7 +36,7 @@ endif
 	python maat-scripts/miner/complexity_analysis.py "../$*/$(file)"
 
 %-indentation-trend: data/%/indentation-trend.csv
-	@
+	less "data/$*/indentation-trend.csv"
 
 data/%/sum-of-coupling.csv: data/%/file-changes.log
 	maat -l "data/$*/file-changes.log" -c git2 -a soc > "$@"

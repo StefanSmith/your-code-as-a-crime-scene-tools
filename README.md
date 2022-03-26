@@ -69,7 +69,7 @@ make my-repo-indentation file=<path to file relative to base of target repo>
 ```
 
 ### File complexity trend
-Generates a CSV file for the specified code file, containing a row per commit over the specified time interval. Each row includes the `total`, `mean` and `standard deviation` number of indentations (tab or 4 spaces) at that point in time.
+Generates and prints a CSV file for the specified code file, containing a row per commit over the specified time interval. Each row includes the `total`, `mean` and `standard deviation` number of indentations (tab or 4 spaces) at that point in time.
 
 Number of indentations is a useful proxy for complexity as it is correlated with the level of code nesting (e.g. nested `if` clauses).
 
