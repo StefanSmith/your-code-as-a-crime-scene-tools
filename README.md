@@ -36,18 +36,18 @@ Follow the installation instructions at https://github.com/AlDanial/cloc.
 
 ### Recipes
 
-This repository assumes it is a sibling directory of the source repositories you wish to analyse. To run an analysis, call a `make` recipe, substituting the name of the repository you wish to analyse. All examples below use `my-repo` as an example.
+To run an analysis, call a `make` recipe and pass the name of the repository you wish to analyse in the `repo` parameter. This repository assumes it is a sibling directory of the source repositories you wish to analyse.
 
 #### Summary of activity
 Reports number of files, number of changes to files and number of authors involved during the specified time frame.
 ```shell
-make my-repo-change-summary from=<YYYY-MM-DD> to=<YYYY-MM-DD>
+make change-summary repo=<repository name> from=<YYYY-MM-DD> to=<YYYY-MM-DD>
 ```
 
 #### Change frequency
 Print how many commits each file has appeared in during the specified time period.
 ```shell
-make my-repo-change-frequency from=<YYYY-MM-DD> to=<YYYY-MM-DD> [groups]
+make change-frequency repo=<repository name> from=<YYYY-MM-DD> to=<YYYY-MM-DD> [groups]
 ```
 Notes:
 - See [Architectural analysis](#architectural-analysis) for explanation of `groups` parameter
@@ -55,7 +55,7 @@ Notes:
 #### Interactive hotspot diagram
 Opens an interactive "circle packing" diagram showing code files, with highlighted red hotspots. The larger the circle, the more lines of code (a rough proxy for complexity). The darker the circle, the higher the frequency of change (correlates with deminishing quality and higher defect rate).
 ```shell
-make my-repo-hotspots from=<YYYY-MM-DD> to=<YYYY-MM-DD> langs="<comma-separated language list>" excludeDirs="<excluded directory regex>"
+make hotspots repo=<repository name> from=<YYYY-MM-DD> to=<YYYY-MM-DD> langs="<comma-separated language list>" excludeDirs="<excluded directory regex>"
 ```
 Notes:
 - Valid values for `langs` can be listed by running `cloc --show-lang`. Examples include `PHP`, `JavaScript` and `TypeScript`.
@@ -64,7 +64,7 @@ Notes:
 #### Hotspot table
 Prints a CSV of code files, sorted by frequency of change, and reporting the current number of lines of code and the number of changes in the specified time frame.
 ```shell
-make my-repo-hotspots-table from=<YYYY-MM-DD> to=<YYYY-MM-DD> langs="<comma-separated language list>" excludeDirs="<excluded directory regex>"
+make hotspots-table repo=<repository name> from=<YYYY-MM-DD> to=<YYYY-MM-DD> langs="<comma-separated language list>" excludeDirs="<excluded directory regex>"
 ```
 See [Interactive hotspot diagram](#interactive-hotspot-diagram) for details of parameter usage.
 
@@ -73,7 +73,7 @@ Prints a single-row CSV of the `total`, `mean`, `standard deviation` and `maximu
 
 Number of indentations is a useful proxy for complexity as it is correlated with the level of code nesting (e.g. nested `if` clauses). A high `maximum` (e.g. `6`) indicates areas of excessive complexity. If the `mean` is also high, the file may suffer from rampant complexity.
 ```shell
-make my-repo-indentation file=<path to file relative to base of target repo>
+make indentation repo=<repository name> file=<path to file relative to base of target repo>
 ```
 
 #### File complexity trend
@@ -85,13 +85,13 @@ The CSV file can be found in `data/<repository name>/indentation-trend.csv`.
 
 After generating the CSV file, paste it into your favourite spreadsheet software and chart how `total`, `mean` and `standard deviation` change over time. This provides a view of the trend in complexity. For example, if the `total` steadily increases but there has been work to refactor the code, you should see a decline in the `mean` and `standard deviation`.
 ```shell
-make my-repo-indentation-trend from=<YYYY-MM-DD> to=<YYYY-MM-DD> file=<path to file relative to base of target repo>
+make indentation-trend repo=<repository name> from=<YYYY-MM-DD> to=<YYYY-MM-DD> file=<path to file relative to base of target repo>
 ```
 
 #### Sum of coupling
 For each file, prints the number of times other files changed alongside it in the same commit
 ```shell
-make my-repo-sum-of-coupling from=<YYYY-MM-DD> to=<YYYY-MM-DD> [groups]
+make sum-of-coupling repo=<repository name> from=<YYYY-MM-DD> to=<YYYY-MM-DD> [groups]
 ```
 Notes:
 - See [Architectural analysis](#architectural-analysis) for explanation of `groups` parameter
@@ -99,7 +99,7 @@ Notes:
 #### Coupling
 For pairs of files, prints the % of shared commits and an average their respective number of commits
 ```shell
-make my-repo-coupling from=<YYYY-MM-DD> to=<YYYY-MM-DD> [minRevisions=5] [minSharedRevisions=5] [minCoupling=30] [groups]
+make coupling repo=<repository name> from=<YYYY-MM-DD> to=<YYYY-MM-DD> [minRevisions=5] [minSharedRevisions=5] [minCoupling=30] [groups]
 ```
 Notes:
 - The higher the average number of commits, the more we can rely on the reported % to inform our expectations about the future degree of coupling between these files.
@@ -112,7 +112,7 @@ Notes:
 #### Authors
 For each file, prints the number of unique authors over the specific time period
 ```shell
-make my-repo-authors from=<YYYY-MM-DD> to=<YYYY-MM-DD> [groups]
+make authors repo=<repository name> from=<YYYY-MM-DD> to=<YYYY-MM-DD> [groups]
 ```
 Notes:
 - See [Architectural analysis](#architectural-analysis) for explanation of `groups` parameter
@@ -122,7 +122,7 @@ Prints two lines for each file: one for the author who has added the most lines 
 
 Removed lines is an approximate indication of the most prolific refactorer. This may be the true "most knowledgeable developer" for a given file, since lines added is subject to disruption from copy-paste behaviour.
 ```shell
-make my-repo-main-devs from=<YYYY-MM-DD> to=<YYYY-MM-DD> [groups]
+make main-devs repo=<repository name> from=<YYYY-MM-DD> to=<YYYY-MM-DD> [groups]
 ```
 Notes:
 - See [Architectural analysis](#architectural-analysis) for explanation of `groups` parameter
@@ -132,7 +132,7 @@ Prints a line for each file and each author during the specific time period. Rep
 
 Useful for investigating who the authors are and whether they have used multiple different aliases that should be merged in the log of file changes.
 ```shell
-make my-repo-entity-ownership from=<YYYY-MM-DD> to=<YYYY-MM-DD> [groups]
+make entity-ownership repo=<repository name> from=<YYYY-MM-DD> to=<YYYY-MM-DD> [groups]
 ```
 Notes:
 - See [Architectural analysis](#architectural-analysis) for explanation of `groups` parameter
@@ -147,4 +147,4 @@ Groups can also be defined in terms of exact-match regex patterns, e.g. `^src/ap
 
 ### Caching
 
-File change history is cached (per repository) between executions. To clear the cache for a repository, run `make clean-[repo]`, e.g. `make clean-my-repo`. To clear the cache for all repositories, run `make clean`.
+File change history is cached (per repository) between executions. To clear the cache for a repository, run `make clean-repo repo=<repository name>`. To clear the cache for all repositories, run `make clean`.

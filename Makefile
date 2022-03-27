@@ -1,5 +1,32 @@
-.PHONEY: clean clean-% %-change-summary %-hotspots %-hotspots-table %-change-frequency %-sum-of-coupling %-coupling %-authors %-main-devs %-entity-ownership %-indentation %-indentation-trend
-.PRECIOUS: data/%/file-changes-$(from)-$(to).log
+.PHONEY: clean clean-repo change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend
+
+repoPath=../$(repo)
+repoDataPath=data/$(repo)
+enclosureDiagramRepoDataPath=enclosure-diagram/$(repoDataPath)
+fileChangesLogFilePath=$(repoDataPath)/file-changes-$(from)-$(to).log
+changeFrequencyReportFilePath=$(repoDataPath)/change-frequency-report.csv
+linesOfCodeReportFilePath=$(repoDataPath)/lines-of-code-report.csv
+hotspotEnclosureDiagramFilePath=$(enclosureDiagramRepoDataPath)/hotspot-enclosure-diagram-data.json
+sumOfCouplingReportFilePath=$(repoDataPath)/sum-of-coupling.csv
+couplingReportFilePath=$(repoDataPath)/coupling.csv
+authorsReportFilePath=$(repoDataPath)/authors.csv
+mainDevsReportFilePath=$(repoDataPath)/main-devs.csv
+refactoringMainDevsReportFilePath=$(repoDataPath)/refactoring-main-devs.csv
+entityOwnershipReportFilePath=$(repoDataPath)/entity-ownership.csv
+indentationTrendReportFilePath=$(repoDataPath)/indentation-trend.csv
+maatGroupsFilePath=$(repoDataPath)/maat-groups.txt
+
+.INTERMEDIATE: $(changeFrequencyReportFilePath) \
+	$(linesOfCodeReportFilePath) \
+	$(hotspotEnclosureDiagramFilePath) \
+	$(sumOfCouplingReportFilePath) \
+	$(couplingReportFilePath) \
+	$(authorsReportFilePath) \
+	$(mainDevsReportFilePath) \
+	$(refactoringMainDevsReportFilePath) \
+	$(entityOwnershipReportFilePath) \
+	$(indentationTrendReportFilePath) \
+	$(maatGroupsFilePath)
 
 makefileDirectoryPath := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
@@ -13,104 +40,105 @@ clean:
 	rm -rf "data"
 	rm -rf "enclosure-diagram/data"
 
-clean-%:
-	rm -rf "data/$*"
-	rm -rf "enclosure-diagram/data/$*"
+clean-repo: validate-common-parameters
+	rm -rf "$(repoDataPath)"
+	rm -rf "$(enclosureDiagramRepoDataPath)"
 
-%-change-summary: data/%/file-changes-$(from)-$(to).log
-	maat -l "data/$*/file-changes-$(from)-$(to).log" -c git2 -a summary
+validate-common-parameters:
+ifndef repo
+	$(error repo is undefined)
+endif
 
-%-hotspots: enclosure-diagram/data/%/code-file-lines-and-change-frequency.json
-	./scripts/open-enclosure-diagram.sh $(port) "data/$*/code-file-lines-and-change-frequency.json"
+change-summary: validate-common-parameters $(fileChangesLogFilePath)
+	maat -l "$(fileChangesLogFilePath)" -c git2 -a summary
 
-%-hotspots-table: data/%/change-frequency-report.csv data/%/lines-of-code-report.csv
-	python maat-scripts/merge/merge_comp_freqs.py "data/$*/change-frequency-report.csv" "data/$*/lines-of-code-report.csv" | less
+hotspots: validate-common-parameters $(hotspotEnclosureDiagramFilePath)
+	./scripts/open-enclosure-diagram.sh $(port) "$(makefileDirectoryPath)/$(hotspotEnclosureDiagramFilePath)"
 
-%-change-frequency: data/%/change-frequency-report.csv
-	less "data/$*/change-frequency-report.csv"
+hotspots-table: validate-common-parameters $(changeFrequencyReportFilePath) $(linesOfCodeReportFilePath)
+	python maat-scripts/merge/merge_comp_freqs.py "$(changeFrequencyReportFilePath)" "$(linesOfCodeReportFilePath)" | less
 
-%-sum-of-coupling: data/%/sum-of-coupling.csv
-	less "data/$*/sum-of-coupling.csv"
+change-frequency: validate-common-parameters $(changeFrequencyReportFilePath)
+	less "$(changeFrequencyReportFilePath)"
 
-%-coupling: data/%/coupling.csv
-	less "data/$*/coupling.csv"
+sum-of-coupling: validate-common-parameters $(sumOfCouplingReportFilePath)
+	less "$(sumOfCouplingReportFilePath)"
 
-%-authors: data/%/authors.csv
-	less "data/$*/authors.csv"
+coupling: validate-common-parameters $(couplingReportFilePath)
+	less "$(couplingReportFilePath)"
 
-%-main-devs: data/%/main-devs.csv data/%/refactoring-main-devs.csv
-	echo "entity,change-type,main-dev,changed,total-changed,ownership\n$$( echo "$$(tail +2 "data/$*/main-devs.csv" | sed 's/,/,added,/')\n$$(tail +2 "data/$*/refactoring-main-devs.csv" | sed 's/,/,removed,/')" | sort )"
+authors: validate-common-parameters $(authorsReportFilePath)
+	less "$(authorsReportFilePath)"
 
-%-entity-ownership: data/%/entity-ownership.csv
-	less "data/$*/entity-ownership.csv"
+main-devs: validate-common-parameters $(mainDevsReportFilePath) $(refactoringMainDevsReportFilePath)
+	echo "entity,change-type,main-dev,changed,total-changed,ownership\n$$( echo "$$(tail +2 "$(mainDevsReportFilePath)" | sed 's/,/,added,/')\n$$(tail +2 "$(refactoringMainDevsReportFilePath)" | sed 's/,/,removed,/')" | sort )"
 
-%-indentation:
+entity-ownership: validate-common-parameters $(entityOwnershipReportFilePath)
+	less "$(entityOwnershipReportFilePath)"
+
+indentation: validate-common-parameters
 ifndef file
 	$(error file is undefined)
 endif
 
-	python maat-scripts/miner/complexity_analysis.py "../$*/$(file)"
+	python maat-scripts/miner/complexity_analysis.py "$(repoPath)/$(file)"
 
-%-indentation-trend: data/%/indentation-trend.csv
-	less "data/$*/indentation-trend.csv"
-
-ifdef groups
-data/%/sum-of-coupling.csv: data/%/groups.txt data/%/file-changes-$(from)-$(to).log
-	$(eval extraMaatSocArguments = "-g data/$*/groups.txt")
-else
-data/%/sum-of-coupling.csv: data/%/file-changes-$(from)-$(to).log
-endif
-	maat -l "data/$*/file-changes-$(from)-$(to).log" -c git2 -a soc $(extraMaatSocArguments) > "$@"
+indentation-trend: validate-common-parameters $(indentationTrendReportFilePath)
+	less "$(indentationTrendReportFilePath)"
 
 ifdef groups
-data/%/coupling.csv: data/%/groups.txt data/%/file-changes-$(from)-$(to).log
-	$(eval extraMaatCouplingArguments = "-g data/$*/groups.txt")
+$(sumOfCouplingReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
+	$(eval extraMaatSocArguments = "-g $(maatGroupsFilePath)")
 else
-data/%/coupling.csv: data/%/file-changes-$(from)-$(to).log
+$(sumOfCouplingReportFilePath): $(fileChangesLogFilePath)
 endif
-	maat -l "data/$*/file-changes-$(from)-$(to).log" -c git2 -a coupling --min-revs $(minRevisions) --min-coupling $(minCoupling) --min-shared-revs $(minSharedRevisions) $(extraMaatCouplingArguments) > "$@"
+	maat -l "$(fileChangesLogFilePath)" -c git2 -a soc $(extraMaatSocArguments) > "$@"
 
 ifdef groups
-data/%/authors.csv: data/%/groups.txt data/%/file-changes-$(from)-$(to).log
-	$(eval extraMaatAuthorsArguments = "-g data/$*/groups.txt")
+$(couplingReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
+	$(eval extraMaatCouplingArguments = "-g $(maatGroupsFilePath)")
 else
-data/%/authors.csv: data/%/file-changes-$(from)-$(to).log
+$(couplingReportFilePath): $(fileChangesLogFilePath)
 endif
-	maat -l "data/$*/file-changes-$(from)-$(to).log" -c git2 -a authors $(extraMaatAuthorsArguments) > "$@"
+	maat -l "$(fileChangesLogFilePath)" -c git2 -a coupling --min-revs $(minRevisions) --min-coupling $(minCoupling) --min-shared-revs $(minSharedRevisions) $(extraMaatCouplingArguments) > "$@"
 
-data/%/groups.txt:
-	mkdir -p "data/$*"
+ifdef groups
+$(authorsReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
+	$(eval extraMaatAuthorsArguments = "-g $(maatGroupsFilePath)")
+else
+$(authorsReportFilePath): $(fileChangesLogFilePath)
+endif
+	maat -l "$(fileChangesLogFilePath)" -c git2 -a authors $(extraMaatAuthorsArguments) > "$@"
+
+$(maatGroupsFilePath):
+	mkdir -p "$(repoDataPath)"
 	sed 's/; */\n/g' <<< '$(groups)' > "$@"
 
 ifdef groups
-data/%/main-devs.csv: data/%/groups.txt data/%/file-changes-$(from)-$(to).log
-	$(eval extraMaatMainDevArguments = "-g data/$*/groups.txt")
+$(mainDevsReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
+	$(eval extraMaatMainDevArguments = "-g $(maatGroupsFilePath)")
 else
-data/%/main-devs.csv: data/%/file-changes-$(from)-$(to).log
+$(mainDevsReportFilePath): $(fileChangesLogFilePath)
 endif
-	maat -l "data/$*/file-changes-$(from)-$(to).log" -c git2 -a main-dev $(extraMaatMainDevArguments) > "$@"
+	maat -l "$(fileChangesLogFilePath)" -c git2 -a main-dev $(extraMaatMainDevArguments) > "$@"
 
 ifdef groups
-data/%/refactoring-main-devs.csv: data/%/groups.txt data/%/file-changes-$(from)-$(to).log
-	$(eval extraMaatRefactoringMainDevArguments = "-g data/$*/groups.txt")
+$(refactoringMainDevsReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
+	$(eval extraMaatRefactoringMainDevArguments = "-g $(maatGroupsFilePath)")
 else
-data/%/refactoring-main-devs.csv: data/%/file-changes-$(from)-$(to).log
+$(refactoringMainDevsReportFilePath): $(fileChangesLogFilePath)
 endif
-	maat -l "data/$*/file-changes-$(from)-$(to).log" -c git2 -a refactoring-main-dev $(extraMaatRefactoringMainDevArguments) > "$@"
+	maat -l "$(fileChangesLogFilePath)" -c git2 -a refactoring-main-dev $(extraMaatRefactoringMainDevArguments) > "$@"
 
 ifdef groups
-data/%/entity-ownership.csv: data/%/groups.txt data/%/file-changes-$(from)-$(to).log
-	$(eval extraMaatEntityOwnershipArguments = "-g data/$*/groups.txt")
+$(entityOwnershipReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
+	$(eval extraMaatEntityOwnershipArguments = "-g $(maatGroupsFilePath)")
 else
-data/%/entity-ownership.csv: data/%/file-changes-$(from)-$(to).log
+$(entityOwnershipReportFilePath): $(fileChangesLogFilePath)
 endif
-	maat -l "data/$*/file-changes-$(from)-$(to).log" -c git2 -a entity-ownership $(extraMaatEntityOwnershipArguments) > "$@"
+	maat -l "$(fileChangesLogFilePath)" -c git2 -a entity-ownership $(extraMaatEntityOwnershipArguments) > "$@"
 
-data/%/groups.txt:
-	mkdir -p "data/$*"
-	sed 's/; */\n/g' <<< '$(groups)' > "$@"
-
-data/%/indentation-trend.csv:
+$(indentationTrendReportFilePath):
 ifndef from
 	$(error from is undefined)
 endif
@@ -123,22 +151,22 @@ ifndef file
 	$(error file is undefined)
 endif
 
-	mkdir -p "data/$*"
-	cd "../$*" && python "$(makefileDirectoryPath)/maat-scripts/miner/git_complexity_trend.py" --start $(shell git --git-dir ../$*/.git log --after=$(from) --pretty=format:%h --reverse | head -1) --end $(shell git --git-dir ../$*/.git log --before=$(to) --pretty=format:%h -1) --file "$(file)" > "$(makefileDirectoryPath)/$@"
+	mkdir -p "$(repoDataPath)"
+	cd "$(repoPath)" && python "$(makefileDirectoryPath)/maat-scripts/miner/git_complexity_trend.py" --start $(shell git --git-dir $(repoPath)/.git log --after=$(from) --pretty=format:%h --reverse | head -1) --end $(shell git --git-dir $(repoPath)/.git log --before=$(to) --pretty=format:%h -1) --file "$(file)" > "$(makefileDirectoryPath)/$@"
 
-enclosure-diagram/data/%/code-file-lines-and-change-frequency.json: data/%/change-frequency-report.csv data/%/lines-of-code-report.csv
-	mkdir -p "enclosure-diagram/data/$*"
-	cd "../$*" && python "$(makefileDirectoryPath)/maat-scripts/transform/csv_as_enclosure_json.py" --structure "$(makefileDirectoryPath)/data/$*/lines-of-code-report.csv" --weights "$(makefileDirectoryPath)/data/$*/change-frequency-report.csv" > "$(makefileDirectoryPath)/$@"
+$(hotspotEnclosureDiagramFilePath): $(changeFrequencyReportFilePath) $(linesOfCodeReportFilePath)
+	mkdir -p "$(enclosureDiagramRepoDataPath)"
+	cd "$(repoPath)" && python "$(makefileDirectoryPath)/maat-scripts/transform/csv_as_enclosure_json.py" --structure "$(makefileDirectoryPath)/$(linesOfCodeReportFilePath)" --weights "$(makefileDirectoryPath)/$(changeFrequencyReportFilePath)" > "$(makefileDirectoryPath)/$@"
 
 ifdef groups
-data/%/change-frequency-report.csv: data/%/groups.txt data/%/file-changes-$(from)-$(to).log
-	$(eval extraMaatRevisionsArguments = "-g data/$*/groups.txt")
+$(changeFrequencyReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
+	$(eval extraMaatRevisionsArguments = "-g $(maatGroupsFilePath)")
 else
-data/%/change-frequency-report.csv: data/%/file-changes-$(from)-$(to).log
+$(changeFrequencyReportFilePath): $(fileChangesLogFilePath)
 endif
-	maat -l "data/$*/file-changes-$(from)-$(to).log" -c git2 -a revisions $(extraMaatRevisionsArguments) > "$@"
+	maat -l "$(fileChangesLogFilePath)" -c git2 -a revisions $(extraMaatRevisionsArguments) > "$@"
 
-data/%/lines-of-code-report.csv:
+$(linesOfCodeReportFilePath):
 ifndef langs
 	$(error langs is undefined)
 endif
@@ -147,10 +175,10 @@ ifndef excludeDirs
 	$(error excludeDirs is undefined)
 endif
 
-	mkdir -p "data/$*"
-	cd "../$*" && cloc ./ --by-file --csv --quiet --include-lang="$(langs)" --fullpath --not-match-d="$(excludeDirs)" > "$(makefileDirectoryPath)/$@"
+	mkdir -p "$(repoDataPath)"
+	cd "$(repoPath)" && cloc ./ --by-file --csv --quiet --include-lang="$(langs)" --fullpath --not-match-d="$(excludeDirs)" > "$(makefileDirectoryPath)/$@"
 
-data/%/file-changes-$(from)-$(to).log:
+$(fileChangesLogFilePath):
 ifndef from
 	$(error from is undefined)
 endif
@@ -159,5 +187,5 @@ ifndef to
 	$(error to is undefined)
 endif
 
-	mkdir -p "data/$*"
-	git --git-dir ../$*/.git log --all --numstat --date=short --pretty=format:'--%h--%ad--%aN' --no-renames --after="$(from)" --before=="$(to)" > "$@"
+	mkdir -p "$(repoDataPath)"
+	git --git-dir $(repoPath)/.git log --all --numstat --date=short --pretty=format:'--%h--%ad--%aN' --no-renames --after="$(from)" --before=="$(to)" > "$@"

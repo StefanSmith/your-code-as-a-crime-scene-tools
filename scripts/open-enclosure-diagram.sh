@@ -6,11 +6,19 @@ set -m
 # Shut down HTTP server
 trap 'kill $(jobs -pr)' SIGINT SIGTERM EXIT
 
+enclosureDiagramDirectoryRelativePath="../enclosure-diagram"
 port=$1
-dataFile=$2
-url="http://localhost:$port/enclosure-diagram.html?file=./$dataFile"
+dataFilePath=$2
 
-cd enclosure-diagram
+scriptDirectoryPath=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+enclosureDiagramDirectoryRealPath=$(cd -- "${scriptDirectoryPath}/${enclosureDiagramDirectoryRelativePath}" &> /dev/null && pwd)
+dataFileRealPath="$(cd -- "$( dirname -- "${dataFilePath}" )" &> /dev/null && pwd)/$( basename  -- "${dataFilePath}")"
+# shellcheck disable=SC2001
+dataFileHttpPath="$( sed "s#${enclosureDiagramDirectoryRealPath}##" <<< "${dataFileRealPath}" )"
+
+url="http://localhost:$port/enclosure-diagram.html?file=${dataFileHttpPath}"
+
+cd "${enclosureDiagramDirectoryRealPath}"
 python -m http.server "${port}" &
 
 # Wait for URL to be available
