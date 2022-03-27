@@ -92,8 +92,7 @@ entity-ownership: validate-common-parameters $(maatGroupsFilePath) $(fileChanges
 indentation: validate-common-parameters validate-file-parameter
 	python maat-scripts/miner/complexity_analysis.py "$(repoPath)/$(file)"
 
-indentation-trend: validate-common-parameters validate-date-range-parameters validate-file-parameter $(indentationTrendReportFilePath)
-	mkdir -p "$(repoDataDirectoryPath)"
+indentation-trend: validate-common-parameters validate-date-range-parameters validate-file-parameter $(indentationTrendReportFilePath) $(repoDataDirectoryPath)
 	cd "$(repoPath)" && python "$(makefileDirectoryPath)/maat-scripts/miner/git_complexity_trend.py" --start $(shell git --git-dir $(repoPath)/.git log --after=$(from) --pretty=format:%h --reverse | head -1) --end $(shell git --git-dir $(repoPath)/.git log --before=$(to) --pretty=format:%h -1) --file "$(file)" | tee "$(makefileDirectoryPath)/$(repoDataDirectoryPath)/indentation-trend.csv" | less
 
 $(mainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
@@ -102,14 +101,13 @@ $(mainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
 $(refactoringMainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
 	$(maatCommand) -a refactoring-main-dev > "$@"
 
-$(hotspotEnclosureDiagramFilePath): $(changeFrequencyReportFilePath) $(linesOfCodeReportFilePath)
-	mkdir -p "$(enclosureDiagramRepoDataDirectoryPath)"
+$(hotspotEnclosureDiagramFilePath): $(changeFrequencyReportFilePath) $(linesOfCodeReportFilePath) $(enclosureDiagramRepoDataDirectoryPath)
 	cd "$(repoPath)" && python "$(makefileDirectoryPath)/maat-scripts/transform/csv_as_enclosure_json.py" --structure "$(makefileDirectoryPath)/$(linesOfCodeReportFilePath)" --weights "$(makefileDirectoryPath)/$(changeFrequencyReportFilePath)" > "$(makefileDirectoryPath)/$@"
 
 $(changeFrequencyReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
 	$(maatCommand) -a revisions > "$@"
 
-$(linesOfCodeReportFilePath):
+$(linesOfCodeReportFilePath): $(repoDataDirectoryPath)
 ifndef langs
 	$(error langs is undefined)
 endif
@@ -118,15 +116,18 @@ ifndef excludeDirs
 	$(error excludeDirs is undefined)
 endif
 
-	mkdir -p "$(repoDataDirectoryPath)"
 	cd "$(repoPath)" && cloc ./ --by-file --csv --quiet --include-lang="$(langs)" --fullpath --not-match-d="$(excludeDirs)" > "$(makefileDirectoryPath)/$@"
 
-$(maatGroupsFilePath):
+$(maatGroupsFilePath): $(repoDataDirectoryPath)
 ifdef groups
-	mkdir -p "$(repoDataDirectoryPath)"
 	sed 's/; */\n/g' <<< '$(groups)' > "$@"
 endif
 
-$(fileChangesLogFilePath): validate-date-range-parameters
-	mkdir -p "$(repoDataDirectoryPath)"
+$(fileChangesLogFilePath): validate-date-range-parameters $(repoDataDirectoryPath)
 	git --git-dir $(repoPath)/.git log --all --numstat --date=short --pretty=format:'--%h--%ad--%aN' --no-renames --after="$(from)" --before=="$(to)" > "$@"
+
+$(repoDataDirectoryPath):
+	mkdir -p "$(repoDataDirectoryPath)"
+
+$(enclosureDiagramRepoDataDirectoryPath):
+	mkdir -p "$(enclosureDiagramRepoDataDirectoryPath)"
