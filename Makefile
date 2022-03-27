@@ -1,4 +1,4 @@
-.PHONEY: clean clean-repo clean-repo-results validate-common-parameters validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend
+.PHONEY: clean clean-repo clean-repo-results validate-common-parameters validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend reset-repository
 
 port=9000
 minRevisions=5
@@ -97,10 +97,10 @@ main-devs: validate-common-parameters $(resultsDirectoryPath) $(mainDevReportFil
 entity-ownership: validate-common-parameters $(resultsDirectoryPath) $(maatGroupsFilePath) $(fileChangesLogFilePath)
 	$(maatCommand) -a entity-ownership | tee "$(resultsDirectoryPath)/entity-ownership.csv" | less
 
-indentation: $(repoPath) validate-common-parameters validate-file-parameter
+indentation: validate-common-parameters validate-file-parameter reset-repository
 	python maat-scripts/miner/complexity_analysis.py "$(repoPath)/$(file)"
 
-indentation-trend: $(repoPath) validate-common-parameters validate-date-range-parameters validate-file-parameter $(resultsDirectoryPath)
+indentation-trend: validate-common-parameters validate-date-range-parameters validate-file-parameter $(resultsDirectoryPath) reset-repository
 	cd "$(repoPath)" && python "$(makefileDirectoryPath)/maat-scripts/miner/git_complexity_trend.py" --start $(shell $(gitLogCommand) --after=$(from) --pretty=format:%h --reverse | head -1) --end $(shell $(gitLogCommand) --before=$(to) --pretty=format:%h -1) --file "$(file)" | tee "$(makefileDirectoryPath)/$(resultsDirectoryPath)/indentation-trend.csv" | less
 
 $(mainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) | validate-common-parameters
@@ -119,7 +119,11 @@ $(changeFrequencyReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath
 	mkdir -p "$(@D)"
 	$(maatCommand) -a revisions > "$@"
 
-$(linesOfCodeReportFilePath): $(repoPath) | validate-common-parameters
+$(linesOfCodeReportFilePath): | validate-common-parameters reset-repository
+ifndef to
+	$(error to is undefined)
+endif
+
 ifndef langs
 	$(error langs is undefined)
 endif
@@ -129,7 +133,7 @@ ifndef excludeDirs
 endif
 
 	mkdir -p "$(@D)"
-	cd "$(repoPath)" && cloc ./ --by-file --csv --quiet --include-lang="$(langs)" --fullpath --not-match-d="$(excludeDirs)" > "$(makefileDirectoryPath)/$@"
+	cd "$(repoPath)" && git reset --hard $(shell $(gitLogCommand) --before=$(to) --pretty=format:%h -1) && cloc ./ --by-file --csv --quiet --include-lang="$(langs)" --fullpath --not-match-d="$(excludeDirs)" > "$(makefileDirectoryPath)/$@"
 
 $(maatGroupsFilePath): | validate-common-parameters
 ifdef groups
@@ -137,12 +141,15 @@ ifdef groups
 	sed 's/; */\n/g' <<< '$(groups)' > "$@"
 endif
 
-$(fileChangesLogFilePath): $(repoPath) | validate-common-parameters validate-date-range-parameters
+$(fileChangesLogFilePath): | validate-common-parameters validate-date-range-parameters reset-repository
 	mkdir -p "$(@D)"
 	$(gitLogCommand) --all --numstat --date=short --pretty=format:'--%h--%ad--%aN' --no-renames --after="$(from)" --before=="$(to)" > "$@"
 
 $(resultsDirectoryPath): | validate-common-parameters
 	mkdir -p "$@"
+
+reset-repository: $(repoPath) | validate-common-parameters
+	cd "$(repoPath)" && git reset --hard HEAD && git checkout master || git checkout main && git reset --hard origin/master || git reset --hard origin/main && git clean -fdx
 
 $(repoPath): | validate-common-parameters
 	rm -rf "$(repoPath)"
