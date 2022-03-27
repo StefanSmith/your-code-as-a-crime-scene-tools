@@ -6,21 +6,23 @@ minCoupling=30
 minSharedRevisions=5
 
 makefileDirectoryPath := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+dataDirectoryPath=data
 repoPath=../$(repo)
-repoDataPath=data/$(repo)
-enclosureDiagramRepoDataPath=enclosure-diagram/$(repoDataPath)
-fileChangesLogFilePath=$(repoDataPath)/file-changes-$(from)-$(to).log
-changeFrequencyReportFilePath=$(repoDataPath)/change-frequency-report.csv
-linesOfCodeReportFilePath=$(repoDataPath)/lines-of-code-report.csv
-hotspotEnclosureDiagramFilePath=$(enclosureDiagramRepoDataPath)/hotspot-enclosure-diagram-data.json
-sumOfCouplingReportFilePath=$(repoDataPath)/sum-of-coupling.csv
-couplingReportFilePath=$(repoDataPath)/coupling.csv
-authorsReportFilePath=$(repoDataPath)/authors.csv
-mainDevsReportFilePath=$(repoDataPath)/main-devs.csv
-refactoringMainDevsReportFilePath=$(repoDataPath)/refactoring-main-devs.csv
-entityOwnershipReportFilePath=$(repoDataPath)/entity-ownership.csv
-indentationTrendReportFilePath=$(repoDataPath)/indentation-trend.csv
-maatGroupsFilePath=$(repoDataPath)/maat-groups.txt
+repoDataDirectoryPath=$(dataDirectoryPath)/$(repo)
+enclosureDiagramDataDirectoryPath=enclosure-diagram/data
+enclosureDiagramRepoDataDirectoryPath=$(enclosureDiagramDataDirectoryPath)/$(repo)
+fileChangesLogFilePath=$(repoDataDirectoryPath)/file-changes-$(from)-$(to).log
+changeFrequencyReportFilePath=$(repoDataDirectoryPath)/change-frequency-report.csv
+linesOfCodeReportFilePath=$(repoDataDirectoryPath)/lines-of-code-report.csv
+hotspotEnclosureDiagramFilePath=$(enclosureDiagramRepoDataDirectoryPath)/hotspot-enclosure-diagram-data.json
+sumOfCouplingReportFilePath=$(repoDataDirectoryPath)/sum-of-coupling.csv
+couplingReportFilePath=$(repoDataDirectoryPath)/coupling.csv
+authorsReportFilePath=$(repoDataDirectoryPath)/authors.csv
+mainDevsReportFilePath=$(repoDataDirectoryPath)/main-devs.csv
+refactoringMainDevsReportFilePath=$(repoDataDirectoryPath)/refactoring-main-devs.csv
+entityOwnershipReportFilePath=$(repoDataDirectoryPath)/entity-ownership.csv
+indentationTrendReportFilePath=$(repoDataDirectoryPath)/indentation-trend.csv
+maatGroupsFilePath=$(repoDataDirectoryPath)/maat-groups.txt
 
 .INTERMEDIATE: $(changeFrequencyReportFilePath) \
 	$(linesOfCodeReportFilePath) \
@@ -41,12 +43,12 @@ ifdef groups
 endif
 
 clean:
-	rm -rf "data"
-	rm -rf "enclosure-diagram/data"
+	rm -rf "$(dataDirectoryPath)"
+	rm -rf "$(enclosureDiagramDataDirectoryPath)"
 
 clean-repo: validate-common-parameters
-	rm -rf "$(repoDataPath)"
-	rm -rf "$(enclosureDiagramRepoDataPath)"
+	rm -rf "$(repoDataDirectoryPath)"
+	rm -rf "$(enclosureDiagramRepoDataDirectoryPath)"
 
 validate-common-parameters:
 ifndef repo
@@ -124,11 +126,11 @@ ifndef file
 	$(error file is undefined)
 endif
 
-	mkdir -p "$(repoDataPath)"
+	mkdir -p "$(repoDataDirectoryPath)"
 	cd "$(repoPath)" && python "$(makefileDirectoryPath)/maat-scripts/miner/git_complexity_trend.py" --start $(shell git --git-dir $(repoPath)/.git log --after=$(from) --pretty=format:%h --reverse | head -1) --end $(shell git --git-dir $(repoPath)/.git log --before=$(to) --pretty=format:%h -1) --file "$(file)" > "$(makefileDirectoryPath)/$@"
 
 $(hotspotEnclosureDiagramFilePath): $(changeFrequencyReportFilePath) $(linesOfCodeReportFilePath)
-	mkdir -p "$(enclosureDiagramRepoDataPath)"
+	mkdir -p "$(enclosureDiagramRepoDataDirectoryPath)"
 	cd "$(repoPath)" && python "$(makefileDirectoryPath)/maat-scripts/transform/csv_as_enclosure_json.py" --structure "$(makefileDirectoryPath)/$(linesOfCodeReportFilePath)" --weights "$(makefileDirectoryPath)/$(changeFrequencyReportFilePath)" > "$(makefileDirectoryPath)/$@"
 
 $(changeFrequencyReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
@@ -143,12 +145,12 @@ ifndef excludeDirs
 	$(error excludeDirs is undefined)
 endif
 
-	mkdir -p "$(repoDataPath)"
+	mkdir -p "$(repoDataDirectoryPath)"
 	cd "$(repoPath)" && cloc ./ --by-file --csv --quiet --include-lang="$(langs)" --fullpath --not-match-d="$(excludeDirs)" > "$(makefileDirectoryPath)/$@"
 
 $(maatGroupsFilePath):
 ifdef groups
-	mkdir -p "$(repoDataPath)"
+	mkdir -p "$(repoDataDirectoryPath)"
 	sed 's/; */\n/g' <<< '$(groups)' > "$@"
 endif
 
@@ -161,5 +163,5 @@ ifndef to
 	$(error to is undefined)
 endif
 
-	mkdir -p "$(repoDataPath)"
+	mkdir -p "$(repoDataDirectoryPath)"
 	git --git-dir $(repoPath)/.git log --all --numstat --date=short --pretty=format:'--%h--%ad--%aN' --no-renames --after="$(from)" --before=="$(to)" > "$@"
