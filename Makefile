@@ -26,6 +26,7 @@ maatGroupsFilePath=$(repoDataDirectoryPath)/maat-groups.txt
 	$(refactoringMainDevReportFilePath) \
 	$(maatGroupsFilePath)
 
+gitLogCommand=git --git-dir "$(repoPath)/.git" log
 maatCommand=maat -l "$(fileChangesLogFilePath)" -c git2
 
 ifdef groups
@@ -59,7 +60,7 @@ ifndef file
 	$(error file is undefined)
 endif
 
-change-summary: validate-common-parameters $(fileChangesLogFilePath)
+change-summary: validate-common-parameters $(repoDataDirectoryPath) $(fileChangesLogFilePath)
 ifdef groups
 	$(error change summary report does not support grouping)
 endif
@@ -68,46 +69,50 @@ endif
 hotspots: validate-common-parameters $(hotspotEnclosureDiagramFilePath)
 	./scripts/open-enclosure-diagram.sh $(port) "$(makefileDirectoryPath)/$(hotspotEnclosureDiagramFilePath)"
 
-hotspots-table: validate-common-parameters $(changeFrequencyReportFilePath) $(linesOfCodeReportFilePath)
-	python maat-scripts/merge/merge_comp_freqs.py "$(changeFrequencyReportFilePath)" "$(linesOfCodeReportFilePath)" | less
+hotspots-table: validate-common-parameters $(repoDataDirectoryPath) $(changeFrequencyReportFilePath) $(linesOfCodeReportFilePath)
+	python maat-scripts/merge/merge_comp_freqs.py "$(changeFrequencyReportFilePath)" "$(linesOfCodeReportFilePath)" | tee "$(repoDataDirectoryPath)/hotspots.csv" | less
 
 change-frequency: validate-common-parameters $(changeFrequencyReportFilePath)
 	less "$(changeFrequencyReportFilePath)"
 
-sum-of-coupling: validate-common-parameters $(maatGroupsFilePath) $(fileChangesLogFilePath)
+sum-of-coupling: validate-common-parameters $(repoDataDirectoryPath) $(maatGroupsFilePath) $(fileChangesLogFilePath)
 	$(maatCommand) -a soc | tee "$(repoDataDirectoryPath)/sum-of-coupling.csv" | less
 
-coupling: validate-common-parameters $(maatGroupsFilePath) $(fileChangesLogFilePath)
+coupling: validate-common-parameters $(repoDataDirectoryPath) $(maatGroupsFilePath) $(fileChangesLogFilePath)
 	$(maatCommand) -a coupling --min-revs $(minRevisions) --min-coupling $(minCoupling) --min-shared-revs $(minSharedRevisions) | tee "$(repoDataDirectoryPath)/coupling.csv" | less
 
-authors: validate-common-parameters $(maatGroupsFilePath) $(fileChangesLogFilePath)
+authors: validate-common-parameters $(repoDataDirectoryPath) $(maatGroupsFilePath) $(fileChangesLogFilePath)
 	$(maatCommand) -a authors | tee "$(repoDataDirectoryPath)/authors.csv" | less
 
-main-devs: validate-common-parameters $(mainDevReportFilePath) $(refactoringMainDevReportFilePath)
+main-devs: validate-common-parameters $(repoDataDirectoryPath) $(mainDevReportFilePath) $(refactoringMainDevReportFilePath)
 	echo "entity,change-type,main-dev,changed,total-changed,ownership\n$$( echo "$$(tail +2 "$(mainDevReportFilePath)" | sed 's/,/,added,/')\n$$(tail +2 "$(refactoringMainDevReportFilePath)" | sed 's/,/,removed,/')" | sort )" | tee $(repoDataDirectoryPath)/main-devs.csv | less
 
-entity-ownership: validate-common-parameters $(maatGroupsFilePath) $(fileChangesLogFilePath)
+entity-ownership: validate-common-parameters $(repoDataDirectoryPath) $(maatGroupsFilePath) $(fileChangesLogFilePath)
 	$(maatCommand) -a entity-ownership | tee "$(repoDataDirectoryPath)/entity-ownership.csv" | less
 
 indentation: validate-common-parameters validate-file-parameter
 	python maat-scripts/miner/complexity_analysis.py "$(repoPath)/$(file)"
 
-indentation-trend: validate-common-parameters validate-date-range-parameters validate-file-parameter $(indentationTrendReportFilePath) $(repoDataDirectoryPath)
-	cd "$(repoPath)" && python "$(makefileDirectoryPath)/maat-scripts/miner/git_complexity_trend.py" --start $(shell git --git-dir $(repoPath)/.git log --after=$(from) --pretty=format:%h --reverse | head -1) --end $(shell git --git-dir $(repoPath)/.git log --before=$(to) --pretty=format:%h -1) --file "$(file)" | tee "$(makefileDirectoryPath)/$(repoDataDirectoryPath)/indentation-trend.csv" | less
+indentation-trend: validate-common-parameters validate-date-range-parameters validate-file-parameter $(repoDataDirectoryPath)
+	cd "$(repoPath)" && python "$(makefileDirectoryPath)/maat-scripts/miner/git_complexity_trend.py" --start $(shell $(gitLogCommand) --after=$(from) --pretty=format:%h --reverse | head -1) --end $(shell $(gitLogCommand) --before=$(to) --pretty=format:%h -1) --file "$(file)" | tee "$(makefileDirectoryPath)/$(repoDataDirectoryPath)/indentation-trend.csv" | less
 
-$(mainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
+$(mainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) | validate-common-parameters
+	mkdir -p "$(@D)"
 	$(maatCommand) -a main-dev > "$@"
 
-$(refactoringMainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
+$(refactoringMainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) | validate-common-parameters
+	mkdir -p "$(@D)"
 	$(maatCommand) -a refactoring-main-dev > "$@"
 
-$(hotspotEnclosureDiagramFilePath): $(changeFrequencyReportFilePath) $(linesOfCodeReportFilePath) $(enclosureDiagramRepoDataDirectoryPath)
+$(hotspotEnclosureDiagramFilePath): $(changeFrequencyReportFilePath) $(linesOfCodeReportFilePath) | validate-common-parameters
+	mkdir -p "$(@D)"
 	cd "$(repoPath)" && python "$(makefileDirectoryPath)/maat-scripts/transform/csv_as_enclosure_json.py" --structure "$(makefileDirectoryPath)/$(linesOfCodeReportFilePath)" --weights "$(makefileDirectoryPath)/$(changeFrequencyReportFilePath)" > "$(makefileDirectoryPath)/$@"
 
-$(changeFrequencyReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
+$(changeFrequencyReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) | validate-common-parameters
+	mkdir -p "$(@D)"
 	$(maatCommand) -a revisions > "$@"
 
-$(linesOfCodeReportFilePath): $(repoDataDirectoryPath)
+$(linesOfCodeReportFilePath): | validate-common-parameters
 ifndef langs
 	$(error langs is undefined)
 endif
@@ -116,18 +121,18 @@ ifndef excludeDirs
 	$(error excludeDirs is undefined)
 endif
 
+	mkdir -p "$(@D)"
 	cd "$(repoPath)" && cloc ./ --by-file --csv --quiet --include-lang="$(langs)" --fullpath --not-match-d="$(excludeDirs)" > "$(makefileDirectoryPath)/$@"
 
-$(maatGroupsFilePath): $(repoDataDirectoryPath)
+$(maatGroupsFilePath): | validate-common-parameters
 ifdef groups
+	mkdir -p "$(@D)"
 	sed 's/; */\n/g' <<< '$(groups)' > "$@"
 endif
 
-$(fileChangesLogFilePath): validate-date-range-parameters $(repoDataDirectoryPath)
-	git --git-dir $(repoPath)/.git log --all --numstat --date=short --pretty=format:'--%h--%ad--%aN' --no-renames --after="$(from)" --before=="$(to)" > "$@"
+$(fileChangesLogFilePath): | validate-common-parameters validate-date-range-parameters
+	mkdir -p "$(@D)"
+	$(gitLogCommand) --all --numstat --date=short --pretty=format:'--%h--%ad--%aN' --no-renames --after="$(from)" --before=="$(to)" > "$@"
 
-$(repoDataDirectoryPath):
-	mkdir -p "$(repoDataDirectoryPath)"
-
-$(enclosureDiagramRepoDataDirectoryPath):
-	mkdir -p "$(enclosureDiagramRepoDataDirectoryPath)"
+$(repoDataDirectoryPath): | validate-common-parameters
+	mkdir -p "$@"
