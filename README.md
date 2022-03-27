@@ -145,6 +145,8 @@ Instead of performing an analysis per file, you can define groups of files and a
 
 Groups can also be defined in terms of exact-match regex patterns, e.g. `^src/apps/([^/]+/)*[^\.]+\.js\$$`. Note: double `$` due to behaviour of `make`
 
-### Caching
+### Clearing cache and results
 
-File change history is cached (per repository) between executions. To clear the cache for a repository, run `make clean-repo repo=<repository name>`. To clear the cache for all repositories, run `make clean`.
+File change history is cached (per repository) between executions. Results are also written to disk.
+
+To clear the cache and results for a repository, run `make clean-repo repo=<repository name>`. To clear for all repositories, run `make clean`.
