@@ -1,5 +1,11 @@
 .PHONEY: clean clean-repo change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend
 
+port=9000
+minRevisions=5
+minCoupling=30
+minSharedRevisions=5
+
+makefileDirectoryPath := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 repoPath=../$(repo)
 repoDataPath=data/$(repo)
 enclosureDiagramRepoDataPath=enclosure-diagram/$(repoDataPath)
@@ -28,13 +34,11 @@ maatGroupsFilePath=$(repoDataPath)/maat-groups.txt
 	$(indentationTrendReportFilePath) \
 	$(maatGroupsFilePath)
 
-makefileDirectoryPath := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+maatCommand=maat -l "$(fileChangesLogFilePath)" -c git2
 
-port=9000
-
-minRevisions=5
-minCoupling=30
-minSharedRevisions=5
+ifdef groups
+	maatCommand:=$(maatCommand) -g $(maatGroupsFilePath)
+endif
 
 clean:
 	rm -rf "data"
@@ -50,7 +54,10 @@ ifndef repo
 endif
 
 change-summary: validate-common-parameters $(fileChangesLogFilePath)
-	maat -l "$(fileChangesLogFilePath)" -c git2 -a summary
+ifdef groups
+	$(error change summary report does not support grouping)
+endif
+	$(maatCommand) -a summary
 
 hotspots: validate-common-parameters $(hotspotEnclosureDiagramFilePath)
 	./scripts/open-enclosure-diagram.sh $(port) "$(makefileDirectoryPath)/$(hotspotEnclosureDiagramFilePath)"
@@ -86,57 +93,23 @@ endif
 indentation-trend: validate-common-parameters $(indentationTrendReportFilePath)
 	less "$(indentationTrendReportFilePath)"
 
-ifdef groups
 $(sumOfCouplingReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
-	$(eval extraMaatSocArguments = "-g $(maatGroupsFilePath)")
-else
-$(sumOfCouplingReportFilePath): $(fileChangesLogFilePath)
-endif
-	maat -l "$(fileChangesLogFilePath)" -c git2 -a soc $(extraMaatSocArguments) > "$@"
+	$(maatCommand) -a soc > "$@"
 
-ifdef groups
 $(couplingReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
-	$(eval extraMaatCouplingArguments = "-g $(maatGroupsFilePath)")
-else
-$(couplingReportFilePath): $(fileChangesLogFilePath)
-endif
-	maat -l "$(fileChangesLogFilePath)" -c git2 -a coupling --min-revs $(minRevisions) --min-coupling $(minCoupling) --min-shared-revs $(minSharedRevisions) $(extraMaatCouplingArguments) > "$@"
+	$(maatCommand) -a coupling --min-revs $(minRevisions) --min-coupling $(minCoupling) --min-shared-revs $(minSharedRevisions) > "$@"
 
-ifdef groups
 $(authorsReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
-	$(eval extraMaatAuthorsArguments = "-g $(maatGroupsFilePath)")
-else
-$(authorsReportFilePath): $(fileChangesLogFilePath)
-endif
-	maat -l "$(fileChangesLogFilePath)" -c git2 -a authors $(extraMaatAuthorsArguments) > "$@"
+	$(maatCommand) -a authors > "$@"
 
-$(maatGroupsFilePath):
-	mkdir -p "$(repoDataPath)"
-	sed 's/; */\n/g' <<< '$(groups)' > "$@"
-
-ifdef groups
 $(mainDevsReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
-	$(eval extraMaatMainDevArguments = "-g $(maatGroupsFilePath)")
-else
-$(mainDevsReportFilePath): $(fileChangesLogFilePath)
-endif
-	maat -l "$(fileChangesLogFilePath)" -c git2 -a main-dev $(extraMaatMainDevArguments) > "$@"
+	$(maatCommand) -a main-dev > "$@"
 
-ifdef groups
 $(refactoringMainDevsReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
-	$(eval extraMaatRefactoringMainDevArguments = "-g $(maatGroupsFilePath)")
-else
-$(refactoringMainDevsReportFilePath): $(fileChangesLogFilePath)
-endif
-	maat -l "$(fileChangesLogFilePath)" -c git2 -a refactoring-main-dev $(extraMaatRefactoringMainDevArguments) > "$@"
+	$(maatCommand) -a refactoring-main-dev > "$@"
 
-ifdef groups
 $(entityOwnershipReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
-	$(eval extraMaatEntityOwnershipArguments = "-g $(maatGroupsFilePath)")
-else
-$(entityOwnershipReportFilePath): $(fileChangesLogFilePath)
-endif
-	maat -l "$(fileChangesLogFilePath)" -c git2 -a entity-ownership $(extraMaatEntityOwnershipArguments) > "$@"
+	$(maatCommand) -a entity-ownership > "$@"
 
 $(indentationTrendReportFilePath):
 ifndef from
@@ -158,13 +131,8 @@ $(hotspotEnclosureDiagramFilePath): $(changeFrequencyReportFilePath) $(linesOfCo
 	mkdir -p "$(enclosureDiagramRepoDataPath)"
 	cd "$(repoPath)" && python "$(makefileDirectoryPath)/maat-scripts/transform/csv_as_enclosure_json.py" --structure "$(makefileDirectoryPath)/$(linesOfCodeReportFilePath)" --weights "$(makefileDirectoryPath)/$(changeFrequencyReportFilePath)" > "$(makefileDirectoryPath)/$@"
 
-ifdef groups
 $(changeFrequencyReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
-	$(eval extraMaatRevisionsArguments = "-g $(maatGroupsFilePath)")
-else
-$(changeFrequencyReportFilePath): $(fileChangesLogFilePath)
-endif
-	maat -l "$(fileChangesLogFilePath)" -c git2 -a revisions $(extraMaatRevisionsArguments) > "$@"
+	$(maatCommand) -a revisions > "$@"
 
 $(linesOfCodeReportFilePath):
 ifndef langs
@@ -177,6 +145,12 @@ endif
 
 	mkdir -p "$(repoDataPath)"
 	cd "$(repoPath)" && cloc ./ --by-file --csv --quiet --include-lang="$(langs)" --fullpath --not-match-d="$(excludeDirs)" > "$(makefileDirectoryPath)/$@"
+
+$(maatGroupsFilePath):
+ifdef groups
+	mkdir -p "$(repoDataPath)"
+	sed 's/; */\n/g' <<< '$(groups)' > "$@"
+endif
 
 $(fileChangesLogFilePath):
 ifndef from
