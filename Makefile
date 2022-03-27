@@ -145,4 +145,5 @@ $(resultsDirectoryPath): | validate-common-parameters
 	mkdir -p "$@"
 
 $(repoPath): | validate-common-parameters
+	rm -rf "$(repoPath)"
 	git clone $(repoUrl) "$(repoPath)"
