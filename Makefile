@@ -1,4 +1,4 @@
-.PHONEY: clean clean-% %-change-summary %-hotspots %-hotspots-table %-change-frequency %-sum-of-coupling %-coupling %-indentation %-indentation-trend
+.PHONEY: clean clean-% %-change-summary %-hotspots %-hotspots-table %-change-frequency %-sum-of-coupling %-coupling %-authors %-main-devs %-entity-ownership %-indentation %-indentation-trend
 .PRECIOUS: data/%/file-changes-$(from)-$(to).log
 
 makefileDirectoryPath := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
@@ -35,6 +35,15 @@ clean-%:
 %-coupling: data/%/coupling.csv
 	less "data/$*/coupling.csv"
 
+%-authors: data/%/authors.csv
+	less "data/$*/authors.csv"
+
+%-main-devs: data/%/main-devs.csv data/%/refactoring-main-devs.csv
+	echo "entity,change-type,main-dev,changed,total-changed,ownership\n$$( echo "$$(tail +2 "data/$*/main-devs.csv" | sed 's/,/,added,/')\n$$(tail +2 "data/$*/refactoring-main-devs.csv" | sed 's/,/,removed,/')" | sort )"
+
+%-entity-ownership: data/%/entity-ownership.csv
+	less "data/$*/entity-ownership.csv"
+
 %-indentation:
 ifndef file
 	$(error file is undefined)
@@ -60,6 +69,42 @@ else
 data/%/coupling.csv: data/%/file-changes-$(from)-$(to).log
 endif
 	maat -l "data/$*/file-changes-$(from)-$(to).log" -c git2 -a coupling --min-revs $(minRevisions) --min-coupling $(minCoupling) --min-shared-revs $(minSharedRevisions) $(extraMaatCouplingArguments) > "$@"
+
+ifdef groups
+data/%/authors.csv: data/%/groups.txt data/%/file-changes-$(from)-$(to).log
+	$(eval extraMaatAuthorsArguments = "-g data/$*/groups.txt")
+else
+data/%/authors.csv: data/%/file-changes-$(from)-$(to).log
+endif
+	maat -l "data/$*/file-changes-$(from)-$(to).log" -c git2 -a authors $(extraMaatAuthorsArguments) > "$@"
+
+data/%/groups.txt:
+	mkdir -p "data/$*"
+	sed 's/; */\n/g' <<< '$(groups)' > "$@"
+
+ifdef groups
+data/%/main-devs.csv: data/%/groups.txt data/%/file-changes-$(from)-$(to).log
+	$(eval extraMaatMainDevArguments = "-g data/$*/groups.txt")
+else
+data/%/main-devs.csv: data/%/file-changes-$(from)-$(to).log
+endif
+	maat -l "data/$*/file-changes-$(from)-$(to).log" -c git2 -a main-dev $(extraMaatMainDevArguments) > "$@"
+
+ifdef groups
+data/%/refactoring-main-devs.csv: data/%/groups.txt data/%/file-changes-$(from)-$(to).log
+	$(eval extraMaatRefactoringMainDevArguments = "-g data/$*/groups.txt")
+else
+data/%/refactoring-main-devs.csv: data/%/file-changes-$(from)-$(to).log
+endif
+	maat -l "data/$*/file-changes-$(from)-$(to).log" -c git2 -a refactoring-main-dev $(extraMaatRefactoringMainDevArguments) > "$@"
+
+ifdef groups
+data/%/entity-ownership.csv: data/%/groups.txt data/%/file-changes-$(from)-$(to).log
+	$(eval extraMaatEntityOwnershipArguments = "-g data/$*/groups.txt")
+else
+data/%/entity-ownership.csv: data/%/file-changes-$(from)-$(to).log
+endif
+	maat -l "data/$*/file-changes-$(from)-$(to).log" -c git2 -a entity-ownership $(extraMaatEntityOwnershipArguments) > "$@"
 
 data/%/groups.txt:
 	mkdir -p "data/$*"

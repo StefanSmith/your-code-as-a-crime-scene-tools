@@ -109,6 +109,34 @@ Notes:
   - `minCoupling` filters out pairs that have a lower degree of coupling
 - See [Architectural analysis](#architectural-analysis) for explanation of `groups` parameter
 
+#### Authors
+For each file, prints the number of unique authors over the specific time period
+```shell
+make my-repo-authors from=<YYYY-MM-DD> to=<YYYY-MM-DD> [groups]
+```
+Notes:
+- See [Architectural analysis](#architectural-analysis) for explanation of `groups` parameter
+
+#### Main Developers
+Prints two lines for each file: one for the author who has added the most lines and one for the author who has removed the most lines. In both cases, the number of lines added or removed by the author is reported, alongside the total lines added / removed and the authors % contribution.
+
+Removed lines is an approximate indication of the most prolific refactorer. This may be the true "most knowledgeable developer" for a given file, since lines added is subject to disruption from copy-paste behaviour.
+```shell
+make my-repo-main-devs from=<YYYY-MM-DD> to=<YYYY-MM-DD> [groups]
+```
+Notes:
+- See [Architectural analysis](#architectural-analysis) for explanation of `groups` parameter
+
+#### Entity Ownership
+Prints a line for each file and each author during the specific time period. Reports the number of lines added and removed by each author.
+
+Useful for investigating who the authors are and whether they have used multiple different aliases that should be merged in the log of file changes.
+```shell
+make my-repo-entity-ownership from=<YYYY-MM-DD> to=<YYYY-MM-DD> [groups]
+```
+Notes:
+- See [Architectural analysis](#architectural-analysis) for explanation of `groups` parameter
+
 ### Architectural analysis
 
 Instead of performing an analysis per file, you can define groups of files and analyse at the level of system layers or other architectural constructs. Specify how you wish to group files using the `groups` argument. For example:
