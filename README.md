@@ -55,18 +55,22 @@ Notes:
 #### Interactive hotspot diagram
 Opens an interactive "circle packing" diagram showing code files, with highlighted red hotspots. The larger the circle, the more lines of code (a rough proxy for complexity). The darker the circle, the higher the frequency of change (correlates with deminishing quality and higher defect rate).
 ```shell
-make hotspots repoUrl=<repository url> from=<YYYY-MM-DD> to=<YYYY-MM-DD> langs="<comma-separated language list>" excludeDirs="<excluded directory regex>"
+make hotspots repoUrl=<repository url> from=<YYYY-MM-DD> to=<YYYY-MM-DD> langs="<comma-separated language list>" excludeDirs="<excluded directory regex>" [groups]
 ```
 Notes:
 - Valid values for `langs` can be listed by running `cloc --show-lang`. Examples include `PHP`, `JavaScript` and `TypeScript`.
 - `excludeDirs` takes a regex expression that is matched against the full path of each file's containing directory. Use `|` between alternative paths you wish to exclude. At a minimum, you should always exclude the path to third party libraries (e.g. `/node_modules/` in JavaScript or `./src/vendor` in PHP).  
+- See [Architectural analysis](#architectural-analysis) for explanation of `groups` parameter
 
 #### Hotspot table
 Prints a CSV of code files, sorted by frequency of change, and reporting the current number of lines of code and the number of changes in the specified time frame.
 ```shell
-make hotspots-table repoUrl=<repository url> from=<YYYY-MM-DD> to=<YYYY-MM-DD> langs="<comma-separated language list>" excludeDirs="<excluded directory regex>"
+make hotspots-table repoUrl=<repository url> from=<YYYY-MM-DD> to=<YYYY-MM-DD> langs="<comma-separated language list>" excludeDirs="<excluded directory regex>" [groups]
 ```
-See [Interactive hotspot diagram](#interactive-hotspot-diagram) for details of parameter usage.
+
+Notes:
+- See [Interactive hotspot diagram](#interactive-hotspot-diagram) for details of parameter usage.
+- See [Architectural analysis](#architectural-analysis) for explanation of `groups` parameter
 
 #### File complexity
 Prints a single-row CSV of the `total`, `mean`, `standard deviation` and `maximum` number of indentations (tab or 4 spaces) in a specified file.

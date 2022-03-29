@@ -133,7 +133,14 @@ ifndef excludeDirs
 endif
 
 	mkdir -p "$(@D)"
+
+# TODO: Reduce duplication
+ifdef groups
+	# TODO: Support git hash checkout
+	./scripts/cloc-for-groups.sh "$(repoPath)" "$(shell $(gitLogCommand) --before=$(to) --pretty=format:%h -1)" "$(langs)" "${groups}" > "$(makefileDirectoryPath)/$@"
+else
 	cd "$(repoPath)" && git reset --hard $(shell $(gitLogCommand) --before=$(to) --pretty=format:%h -1) && cloc ./ --by-file --csv --quiet --include-lang="$(langs)" --fullpath --not-match-d="$(excludeDirs)" > "$(makefileDirectoryPath)/$@"
+endif
 
 $(maatGroupsFilePath): | validate-common-parameters
 ifdef groups
