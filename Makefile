@@ -6,6 +6,15 @@ minSharedRevisions=5
 repoName=$(shell md5sum <<< "$(repoUrl)" | cut -d' ' -f1)
 dataDirectoryPath=data
 
+ifdef repoUrl
+numberOfRepositories="$(shell tr ';' '\n' <<< "${repoUrl}" | grep -E -v "^ *$$" | wc -l | xargs)"
+ifneq ($(numberOfRepositories), "1")
+ifdef groups
+crossRepositoryGrouping="true"
+endif
+endif
+endif
+
 repositoriesDirectoryPath=data/repositories
 
 analysesDirectoryPath=data/analyses
@@ -31,9 +40,9 @@ hotspotEnclosureDiagramFilePath=$(enclosureDiagramRepoDataDirectoryPath)/hotspot
 fileChangesLogFilePath=$(analysisDirectoryPath)/$(fileChangesLogFileName)
 changeFrequencyReportFilePath=$(analysisDirectoryPath)/change-frequency-report.csv
 linesOfCodeReportFilePath=$(analysisDirectoryPath)/$(linesOfCodeReportFileName)
-mainDevReportFilePath=$(resultsDirectoryPath)/main-dev.csv
-refactoringMainDevReportFilePath=$(resultsDirectoryPath)/refactoring-main-dev.csv
-maatGroupsFilePath=$(resultsDirectoryPath)/maat-groups.txt
+mainDevReportFilePath=$(analysisDirectoryPath)/main-dev.csv
+refactoringMainDevReportFilePath=$(analysisDirectoryPath)/refactoring-main-dev.csv
+maatGroupsFilePath=$(analysisDirectoryPath)/maat-groups.txt
 
 .INTERMEDIATE: $(changeFrequencyReportFilePath) \
 	$(linesOfCodeReportFilePath) \
@@ -51,8 +60,11 @@ ifdef groups
 	maatCommand:=$(maatCommand) -g $(maatGroupsFilePath)
 endif
 
-clean:
+clean: clean-analyses
 	rm -rf "$(dataDirectoryPath)"
+
+clean-analyses:
+	rm -rf "$(analysesDirectoryPath)"
 	rm -rf "$(enclosureDiagramDataDirectoryPath)"
 
 clean-repo: validate-common-parameters
@@ -82,40 +94,44 @@ ifndef file
 	$(error file is undefined)
 endif
 
-change-summary: validate-common-parameters $(resultsDirectoryPath) $(fileChangesLogFilePath)
+change-summary: validate-common-parameters $(fileChangesLogFilePath)
 ifdef groups
 	$(error change summary report does not support grouping)
 endif
-	$(maatCommand) -a summary | tee "$(resultsDirectoryPath)/change-summary.csv" | less
+	$(maatCommand) -a summary | tee "$(analysisDirectoryPath)/change-summary.csv" | less
 
 hotspots: validate-common-parameters $(hotspotEnclosureDiagramFilePath)
 	./scripts/open-enclosure-diagram.sh $(port) "$(makefileDirectoryPath)/$(hotspotEnclosureDiagramFilePath)"
 
-hotspots-table: validate-common-parameters $(resultsDirectoryPath) $(changeFrequencyReportFilePath) $(linesOfCodeReportFilePath)
-	python maat-scripts/merge/merge_comp_freqs.py "$(changeFrequencyReportFilePath)" "$(linesOfCodeReportFilePath)" | tee "$(resultsDirectoryPath)/hotspots.csv" | less
+hotspots-table: validate-common-parameters $(changeFrequencyReportFilePath) $(linesOfCodeReportFilePath)
+	python maat-scripts/merge/merge_comp_freqs.py "$(changeFrequencyReportFilePath)" "$(linesOfCodeReportFilePath)" | tee "$(analysisDirectoryPath)/hotspots.csv" | less
 
 change-frequency: validate-common-parameters $(changeFrequencyReportFilePath)
 	less "$(changeFrequencyReportFilePath)"
 
-sum-of-coupling: validate-common-parameters $(resultsDirectoryPath) $(maatGroupsFilePath) $(fileChangesLogFilePath)
-	$(maatCommand) -a soc | tee "$(resultsDirectoryPath)/sum-of-coupling.csv" | less
+sum-of-coupling: validate-common-parameters $(maatGroupsFilePath) $(fileChangesLogFilePath)
+	$(maatCommand) -a soc | tee "$(analysisDirectoryPath)/sum-of-coupling.csv" | less
 
-coupling: validate-common-parameters $(resultsDirectoryPath) $(maatGroupsFilePath) $(fileChangesLogFilePath)
-	$(maatCommand) -a coupling --min-revs $(minRevisions) --min-coupling $(minCoupling) --min-shared-revs $(minSharedRevisions) | tee "$(resultsDirectoryPath)/coupling.csv" | less
+coupling: validate-common-parameters $(maatGroupsFilePath) $(fileChangesLogFilePath)
+	$(maatCommand) -a coupling --min-revs $(minRevisions) --min-coupling $(minCoupling) --min-shared-revs $(minSharedRevisions) | tee "$(analysisDirectoryPath)/coupling.csv" | less
 
-authors: validate-common-parameters $(resultsDirectoryPath) $(maatGroupsFilePath) $(fileChangesLogFilePath)
-	$(maatCommand) -a authors | tee "$(resultsDirectoryPath)/authors.csv" | less
+authors: validate-common-parameters $(maatGroupsFilePath) $(fileChangesLogFilePath)
+	$(maatCommand) -a authors | tee "$(analysisDirectoryPath)/authors.csv" | less
 
-main-devs: validate-common-parameters $(resultsDirectoryPath) $(mainDevReportFilePath) $(refactoringMainDevReportFilePath)
-	echo "entity,change-type,main-dev,changed,total-changed,ownership\n$$( echo "$$(tail +2 "$(mainDevReportFilePath)" | sed 's/,/,added,/')\n$$(tail +2 "$(refactoringMainDevReportFilePath)" | sed 's/,/,removed,/')" | sort )" | tee $(resultsDirectoryPath)/main-devs.csv | less
+main-devs: validate-common-parameters $(mainDevReportFilePath) $(refactoringMainDevReportFilePath)
+	echo "entity,change-type,main-dev,changed,total-changed,ownership\n$$( echo "$$(tail +2 "$(mainDevReportFilePath)" | sed 's/,/,added,/')\n$$(tail +2 "$(refactoringMainDevReportFilePath)" | sed 's/,/,removed,/')" | sort )" | tee $(analysisDirectoryPath)/main-devs.csv | less
 
-entity-ownership: validate-common-parameters $(resultsDirectoryPath) $(maatGroupsFilePath) $(fileChangesLogFilePath)
-	$(maatCommand) -a entity-ownership | tee "$(resultsDirectoryPath)/entity-ownership.csv" | less
+entity-ownership: validate-common-parameters $(maatGroupsFilePath) $(fileChangesLogFilePath)
+	$(maatCommand) -a entity-ownership | tee "$(analysisDirectoryPath)/entity-ownership.csv" | less
 
-indentation: validate-common-parameters validate-file-parameter reset-repository
-	python maat-scripts/miner/complexity_analysis.py "$(repoPath)/$(file)"
+indentation: validate-common-parameters validate-file-parameter $(repositoryDirectoryPaths)
+ifneq ($(numberOfRepositories),1)
+	$(error only one repository can be specified for this operation)
+endif
+	git -C "$(repositoryDirectoryPaths)" reset --hard origin/master || git -C "$(repositoryDirectoryPaths)" reset --hard origin/main && git -C "$(repositoryDirectoryPaths)" clean -fdx
+	python maat-scripts/miner/complexity_analysis.py "$(repositoryDirectoryPaths)/$(file)"
 
-indentation-trend: validate-common-parameters validate-date-range-parameters validate-file-parameter $(resultsDirectoryPath) reset-repository
+indentation-trend: validate-common-parameters validate-date-range-parameters validate-file-parameter reset-repository
 	cd "$(repoPath)" && python "$(makefileDirectoryPath)/maat-scripts/miner/git_complexity_trend.py" --start $(shell $(gitLogCommand) --after=$(from) --pretty=format:%h --reverse | head -1) --end $(shell $(gitLogCommand) --before=$(to) --pretty=format:%h -1) --file "$(file)" | tee "$(makefileDirectoryPath)/$(resultsDirectoryPath)/indentation-trend.csv" | less
 
 $(mainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) | validate-common-parameters
@@ -134,23 +150,13 @@ $(changeFrequencyReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath
 	mkdir -p "$(@D)"
 	$(maatCommand) -a revisions > "$@"
 
-
-ifdef repoUrl
-numberOfRepositories="$(shell tr ';' '\n' <<< "${repoUrl}" | grep -E -v "^ *$$" | wc -l | xargs)"
-ifneq ($(numberOfRepositories), 1)
-ifdef groups
-crossRepositoryGrouping="true"
-endif
-endif
-endif
-
 ifdef crossRepositoryGrouping
 $(linesOfCodeReportFilePath): $(repositoryDirectoryPaths) | validate-common-parameters
 else
 $(linesOfCodeReportFilePath): $(linesOfCodeReportFilePaths) | validate-common-parameters
 endif
 	mkdir -p "$(@D)"
-ifdef crossRepositoryGrouping
+ifeq ($(crossRepositoryGrouping), "true")
 	scripts/checkout-repositories-at-date.sh "$(to)" "$(repositoryDirectoryPaths)"
 	scripts/cloc-for-groups.sh "$(repositoriesDirectoryPath)" "$(langs)" "${groups}" > "$@"
 else
@@ -171,7 +177,7 @@ ifndef excludeDirs
 endif
 
 	mkdir -p "$(@D)"
-	scripts/checkout-repository-at-date.sh "$(to)" "$(makefileDirectoryPath)/$(repositoriesDirectoryPath)/%"
+	scripts/checkout-repository-at-date.sh "$(to)" "$(makefileDirectoryPath)/$(repositoriesDirectoryPath)/$*"
 
 # TODO: Reduce duplication
 ifdef groups
