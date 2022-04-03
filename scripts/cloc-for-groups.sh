@@ -3,12 +3,10 @@
 set -o pipefail -o nounset -o errexit
 
 targetDirectory="$1"
-gitCommitHash="$2"
-langs="$3"
-groupsExpression="$4"
+langs="$2"
+groupsExpression="$3"
 
 cd "${targetDirectory}"
-git reset --hard "${gitCommitHash}" >/dev/null 2>&1
 
 echo "language,filename,blank,comment,code"
 
