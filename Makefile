@@ -3,7 +3,6 @@ minRevisions=5
 minCoupling=30
 minSharedRevisions=5
 
-repoName=$(shell md5sum <<< "$(repoUrl)" | cut -d' ' -f1)
 dataDirectoryPath=data
 
 ifdef repoUrl
@@ -18,7 +17,8 @@ endif
 repositoriesDirectoryPath=data/repositories
 
 analysesDirectoryPath=data/analyses
-analysisDirectoryPath=$(analysesDirectoryPath)/$(shell sed 's/ *; */\n/g' <<< "$(repoUrl)" | sort | md5sum | cut -d ' ' -f1)
+analysisId=$(shell sed 's/ *; */\n/g' <<< "$(repoUrl)" | sort | md5sum | cut -d ' ' -f1)
+analysisDirectoryPath=$(analysesDirectoryPath)/$(analysisId)
 
 fileChangesLogFileName=file-changes-$(from)-$(to).log
 fileChangesLogFilePaths=$(shell sed 's/ *; */\n/g' <<< "$(repoUrl)" | sort | xargs -I {} bash -c 'echo "$(analysesDirectoryPath)/$$(scripts/get-repository-path.sh "{}")/$(fileChangesLogFileName)"')
@@ -28,14 +28,11 @@ linesOfCodeReportFilePaths=$(shell sed 's/ *; */\n/g' <<< "$(repoUrl)" | sort | 
 
 repositoryDirectoryPaths=$(shell sed 's/ *; */\n/g' <<< "$(repoUrl)" | sort | xargs -I {} bash -c 'echo "$(repositoriesDirectoryPath)/$$(scripts/get-repository-path.sh "{}")"')
 
-.PHONEY: clean clean-repo clean-repo-results validate-common-parameters validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend reset-repository
+.PHONEY: clean clean-analyses validate-common-parameters validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend
 
 makefileDirectoryPath := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-repoWorkingDirectoryPath=$(dataDirectoryPath)/$(repoName)
-repoPath=$(repoWorkingDirectoryPath)/repository
-resultsDirectoryPath=$(repoWorkingDirectoryPath)/analysis-results
 enclosureDiagramDataDirectoryPath=enclosure-diagram/data
-enclosureDiagramRepoDataDirectoryPath=$(enclosureDiagramDataDirectoryPath)/$(repoName)
+enclosureDiagramRepoDataDirectoryPath=$(enclosureDiagramDataDirectoryPath)/$(analysisId)
 hotspotEnclosureDiagramFilePath=$(enclosureDiagramRepoDataDirectoryPath)/hotspot-enclosure-diagram-data.json
 fileChangesLogFilePath=$(analysisDirectoryPath)/$(fileChangesLogFileName)
 changeFrequencyReportFilePath=$(analysisDirectoryPath)/change-frequency-report.csv
@@ -53,7 +50,6 @@ maatGroupsFilePath=$(analysisDirectoryPath)/maat-groups.txt
 	$(maatGroupsFilePath) \
 	$(fileChangesLogFilePath)
 
-gitLogCommand=git -C "$(repoPath)" log
 maatCommand=maat -l "$(fileChangesLogFilePath)" -c git2
 
 ifdef groups
@@ -66,14 +62,6 @@ clean: clean-analyses
 clean-analyses:
 	rm -rf "$(analysesDirectoryPath)"
 	rm -rf "$(enclosureDiagramDataDirectoryPath)"
-
-clean-repo: validate-common-parameters
-	rm -rf "$(repoWorkingDirectoryPath)"
-	rm -rf "$(enclosureDiagramRepoDataDirectoryPath)"
-
-clean-repo-results: validate-common-parameters
-	rm -rf "$(resultsDirectoryPath)"
-	rm -rf "$(enclosureDiagramRepoDataDirectoryPath)"
 
 validate-common-parameters:
 ifndef repoUrl
@@ -125,14 +113,18 @@ entity-ownership: validate-common-parameters $(maatGroupsFilePath) $(fileChanges
 	$(maatCommand) -a entity-ownership | tee "$(analysisDirectoryPath)/entity-ownership.csv" | less
 
 indentation: validate-common-parameters validate-file-parameter $(repositoryDirectoryPaths)
-ifneq ($(numberOfRepositories),1)
+ifneq ($(numberOfRepositories),"1")
 	$(error only one repository can be specified for this operation)
 endif
 	git -C "$(repositoryDirectoryPaths)" reset --hard origin/master || git -C "$(repositoryDirectoryPaths)" reset --hard origin/main && git -C "$(repositoryDirectoryPaths)" clean -fdx
 	python maat-scripts/miner/complexity_analysis.py "$(repositoryDirectoryPaths)/$(file)"
 
-indentation-trend: validate-common-parameters validate-date-range-parameters validate-file-parameter reset-repository
-	cd "$(repoPath)" && python "$(makefileDirectoryPath)/maat-scripts/miner/git_complexity_trend.py" --start $(shell $(gitLogCommand) --after=$(from) --pretty=format:%h --reverse | head -1) --end $(shell $(gitLogCommand) --before=$(to) --pretty=format:%h -1) --file "$(file)" | tee "$(makefileDirectoryPath)/$(resultsDirectoryPath)/indentation-trend.csv" | less
+indentation-trend: validate-common-parameters validate-date-range-parameters validate-file-parameter $(repositoryDirectoryPaths)
+ifneq ($(numberOfRepositories),"1")
+	$(error only one repository can be specified for this operation)
+endif
+	git -C "$(repositoryDirectoryPaths)" reset --hard origin/master || git -C "$(repositoryDirectoryPaths)" reset --hard origin/main && git -C "$(repositoryDirectoryPaths)" clean -fdx
+	cd "$(repositoryDirectoryPaths)" && python "$(makefileDirectoryPath)/maat-scripts/miner/git_complexity_trend.py" --start $(shell git -C "$(repositoryDirectoryPaths)" log --after=$(from) --pretty=format:%h --reverse | head -1) --end $(shell git -C "$(repositoryDirectoryPaths)" log --before=$(to) --pretty=format:%h -1) --file "$(file)" | tee "$(makefileDirectoryPath)/$(analysisDirectoryPath)/indentation-trend.csv" | less
 
 $(mainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) | validate-common-parameters
 	mkdir -p "$(@D)"
@@ -203,13 +195,3 @@ $(fileChangesLogFilePaths): $(analysesDirectoryPath)/%/$(fileChangesLogFileName)
 
 $(repositoriesDirectoryPath)/%: | validate-common-parameters
 	git clone "$$(scripts/pick-repository-url-for-path.sh "$(repoUrl)" "$*")" "$@"
-
-$(resultsDirectoryPath): | validate-common-parameters
-	mkdir -p "$@"
-
-reset-repository: $(repoPath) | validate-common-parameters
-	cd "$(repoPath)" && git reset --hard HEAD && git checkout master || git checkout main && git reset --hard origin/master || git reset --hard origin/main && git clean -fdx
-
-$(repoPath): | validate-common-parameters
-	rm -rf "$(repoPath)"
-	git clone $(repoUrl) "$(repoPath)"
