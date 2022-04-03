@@ -1,23 +1,37 @@
-.PHONEY: clean clean-repo clean-repo-results validate-common-parameters validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend reset-repository
-
 port=9000
 minRevisions=5
 minCoupling=30
 minSharedRevisions=5
 
-repoName=$(shell sed -E 's@[^/]+/(.+)\.git@\1@' <<< "$(repoUrl)")
+repoName=$(shell md5sum <<< "$(repoUrl)" | cut -d' ' -f1)
+dataDirectoryPath=data
+
+repositoriesDirectoryPath=data/repositories
+resetRepositoryTargetPrefix=reset-
+
+analysesDirectoryPath=data/analyses
+analysisDirectoryPath=$(analysesDirectoryPath)/$(shell sed 's/ *; */\n/g' <<< "$(repoUrl)" | sort | md5sum | cut -d ' ' -f1)
+
+fileChangesLogFileName=file-changes-$(from)-$(to).log
+fileChangesLogFileRelativePath=analysis/$(fileChangesLogFileName)
+fileChangesLogFilePaths=$(shell sed 's/ *; */\n/g' <<< "$(repoUrl)" | sort | xargs -I {} bash -c 'echo "$(repositoriesDirectoryPath)/$$(base64 <<< "{}")/$(fileChangesLogFileRelativePath)"')
+
+linesOfCodeReportFileName=lines-of-code-report.csv
+linesOfCodeReportFileRelativePath=analysis/$(linesOfCodeReportFileName)
+linesOfCodeReportFilePaths=$(shell sed 's/ *; */\n/g' <<< "$(repoUrl)" | sort | xargs -I {} bash -c 'echo "$(repositoriesDirectoryPath)/$$(base64 <<< "{}")/$(linesOfCodeReportFileRelativePath)"')
+
+.PHONEY: clean clean-repo clean-repo-results validate-common-parameters validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend reset-repository $(resetRepositoryTargetPrefix)%
 
 makefileDirectoryPath := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-dataDirectoryPath=data
 repoWorkingDirectoryPath=$(dataDirectoryPath)/$(repoName)
 repoPath=$(repoWorkingDirectoryPath)/repository
 resultsDirectoryPath=$(repoWorkingDirectoryPath)/analysis-results
 enclosureDiagramDataDirectoryPath=enclosure-diagram/data
 enclosureDiagramRepoDataDirectoryPath=$(enclosureDiagramDataDirectoryPath)/$(repoName)
 hotspotEnclosureDiagramFilePath=$(enclosureDiagramRepoDataDirectoryPath)/hotspot-enclosure-diagram-data.json
-fileChangesLogFilePath=$(resultsDirectoryPath)/file-changes-$(from)-$(to).log
-changeFrequencyReportFilePath=$(resultsDirectoryPath)/change-frequency-report.csv
-linesOfCodeReportFilePath=$(resultsDirectoryPath)/lines-of-code-report.csv
+fileChangesLogFilePath=$(analysisDirectoryPath)/$(fileChangesLogFileName)
+changeFrequencyReportFilePath=$(analysisDirectoryPath)/change-frequency-report.csv
+linesOfCodeReportFilePath=$(analysisDirectoryPath)/$(linesOfCodeReportFileName)
 mainDevReportFilePath=$(resultsDirectoryPath)/main-dev.csv
 refactoringMainDevReportFilePath=$(resultsDirectoryPath)/refactoring-main-dev.csv
 maatGroupsFilePath=$(resultsDirectoryPath)/maat-groups.txt
@@ -27,7 +41,8 @@ maatGroupsFilePath=$(resultsDirectoryPath)/maat-groups.txt
 	$(hotspotEnclosureDiagramFilePath) \
 	$(mainDevReportFilePath) \
 	$(refactoringMainDevReportFilePath) \
-	$(maatGroupsFilePath)
+	$(maatGroupsFilePath) \
+	$(fileChangesLogFilePath)
 
 gitLogCommand=git --git-dir "$(repoPath)/.git" log
 maatCommand=maat -l "$(fileChangesLogFilePath)" -c git2
@@ -119,7 +134,11 @@ $(changeFrequencyReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath
 	mkdir -p "$(@D)"
 	$(maatCommand) -a revisions > "$@"
 
-$(linesOfCodeReportFilePath): | validate-common-parameters reset-repository
+$(linesOfCodeReportFilePath): $(linesOfCodeReportFilePaths) | validate-common-parameters
+	mkdir -p "$(@D)"
+	scripts/merge-lines-of-code-reports.sh "$(linesOfCodeReportFilePaths)" "$(repositoriesDirectoryPath)" "$(linesOfCodeReportFileRelativePath)" > "$@"
+
+$(linesOfCodeReportFilePaths): $(repositoriesDirectoryPath)/%/$(linesOfCodeReportFileRelativePath): | $(resetRepositoryTargetPrefix)%
 ifndef to
 	$(error to is undefined)
 endif
@@ -136,10 +155,9 @@ endif
 
 # TODO: Reduce duplication
 ifdef groups
-	# TODO: Support git hash checkout
-	./scripts/cloc-for-groups.sh "$(repoPath)" "$(shell $(gitLogCommand) --before=$(to) --pretty=format:%h -1)" "$(langs)" "${groups}" > "$(makefileDirectoryPath)/$@"
+	./scripts/cloc-for-groups.sh "$(repoPath)" "$(shell git --git-dir "$(repositoriesDirectoryPath)/$*/repository/.git" log --before=$(to) --pretty=format:%h -1)" "$(langs)" "${groups}" > "$(makefileDirectoryPath)/$@"
 else
-	cd "$(repoPath)" && git reset --hard $(shell $(gitLogCommand) --before=$(to) --pretty=format:%h -1) && cloc ./ --by-file --csv --quiet --include-lang="$(langs)" --fullpath --not-match-d="$(excludeDirs)" > "$(makefileDirectoryPath)/$@"
+	cd "$(repositoriesDirectoryPath)/$*/repository" && git reset --hard $(shell git --git-dir "$(repositoriesDirectoryPath)/$*/repository/.git" log --before=$(to) --pretty=format:%h -1) && cloc ./ --by-file --csv --quiet --include-lang="$(langs)" --fullpath --not-match-d="$(excludeDirs)" > "$(makefileDirectoryPath)/$@"
 endif
 
 $(maatGroupsFilePath): | validate-common-parameters
@@ -148,9 +166,19 @@ ifdef groups
 	sed 's/; */\n/g' <<< '$(groups)' > "$@"
 endif
 
-$(fileChangesLogFilePath): | validate-common-parameters validate-date-range-parameters reset-repository
+$(fileChangesLogFilePath): $(fileChangesLogFilePaths) | validate-common-parameters validate-date-range-parameters
 	mkdir -p "$(@D)"
-	$(gitLogCommand) --all --numstat --date=short --pretty=format:'--%h--%ad--%aN' --no-renames --after="$(from)" --before=="$(to)" > "$@"
+	scripts/merge-file-changes.sh "$(fileChangesLogFilePaths)" "$(repositoriesDirectoryPath)" "$(fileChangesLogFileRelativePath)" > "$@"
+
+$(fileChangesLogFilePaths): $(repositoriesDirectoryPath)/%/$(fileChangesLogFileRelativePath): | $(resetRepositoryTargetPrefix)%
+	mkdir -p "$(@D)"
+	git --git-dir "$(repositoriesDirectoryPath)/$*/repository/.git" log --all --numstat --date=short --pretty=format:'--%h--%ad--%aN' --no-renames --after="$(from)" --before=="$(to)" > "$@"
+
+$(resetRepositoryTargetPrefix)%: $(repositoriesDirectoryPath)/%/repository | validate-common-parameters
+	cd "$(repositoriesDirectoryPath)/$*/repository" && git reset --hard HEAD && git checkout master || git checkout main && git reset --hard origin/master || git reset --hard origin/main && git clean -fdx
+
+$(repositoriesDirectoryPath)/%/repository: | validate-common-parameters
+	git clone $$(base64 -d <<< "$*") "$@"
 
 $(resultsDirectoryPath): | validate-common-parameters
 	mkdir -p "$@"
