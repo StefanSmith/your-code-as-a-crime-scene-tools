@@ -100,8 +100,12 @@ change-frequency: validate-common-parameters $(changeFrequencyReportFilePath)
 sum-of-coupling: validate-common-parameters $(maatGroupsFilePath) $(fileChangesLogFilePath)
 	$(maatCommand) -a soc | tee "$(analysisDirectoryPath)/sum-of-coupling.csv" | less
 
+ifeq ($(sameDayCoupling), true)
+maatCouplingTemporalPeriodOption=--temporal-period 1
+endif
+
 coupling: validate-common-parameters $(maatGroupsFilePath) $(fileChangesLogFilePath)
-	$(maatCommand) -a coupling --min-revs $(minRevisions) --min-coupling $(minCoupling) --min-shared-revs $(minSharedRevisions) | tee "$(analysisDirectoryPath)/coupling.csv" | less
+	$(maatCommand) -a coupling --min-revs $(minRevisions) --min-coupling $(minCoupling) --min-shared-revs $(minSharedRevisions) $(maatCouplingTemporalPeriodOption) | tee "$(analysisDirectoryPath)/coupling.csv" | less
 
 authors: validate-common-parameters $(maatGroupsFilePath) $(fileChangesLogFilePath)
 	$(maatCommand) -a authors | tee "$(analysisDirectoryPath)/authors.csv" | less
