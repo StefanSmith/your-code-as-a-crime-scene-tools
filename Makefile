@@ -5,6 +5,10 @@ minSharedRevisions=5
 
 dataDirectoryPath=data
 
+ifeq ($(groupByRepo), true)
+groups=$(shell sed 's/ *; */\n/g' <<< "$(repoUrl)" | sort | xargs -I {} bash -c 'echo "$$(scripts/get-repository-path.sh "{}") => $$(scripts/get-repository-name.sh "{}" "$(fullyQualifiedRepoNames)");"')
+endif
+
 ifdef repoUrl
 numberOfRepositories="$(shell tr ';' '\n' <<< "${repoUrl}" | grep -E -v "^ *$$" | wc -l | xargs)"
 ifneq ($(numberOfRepositories), "1")
