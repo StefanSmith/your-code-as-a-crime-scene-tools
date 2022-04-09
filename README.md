@@ -34,125 +34,158 @@ Follow the installation instructions at https://github.com/AlDanial/cloc.
 
 ## Usage
 
-### Recipes
+To run an analysis, call one of the `make` recipes documented in [Analysis recipes](#analysis-recipes), specifying which repositories to analyse and over what time period, for example:
 
-To run an analysis, call a `make` recipe and pass the URL of the repository you wish to analyse in the `repoUrl` parameter.
-
-#### Summary of activity
-Reports number of files, number of changes to files and number of authors involved during the specified time frame.
-```shell
-make change-summary repoUrl=<repository url> from=<YYYY-MM-DD> to=<YYYY-MM-DD>
+```
+make change-summary repoUrls='git@github.com:org-1/repo-a.git' from=2021-05-01 to=2022-03-01
 ```
 
-#### Change frequency
-Print how many commits each file has appeared in during the specified time period.
-```shell
-make change-frequency repoUrl=<repository url> from=<YYYY-MM-DD> to=<YYYY-MM-DD> [groups]
-```
-Notes:
-- See [Architectural analysis](#architectural-analysis) for explanation of `groups` parameter
+## Common recipe parameters
 
-#### Interactive hotspot diagram
+### `repoUrls` (required)
+
+Takes a semicolon-separated list of ssh URLs for the repositories you wish to analyse.
+
+Each repository will be cloned into a subdirectory based on its URL and name. For example, a repository cloned using `git@github.com:org-1/repo-a.git` will be stored at `com/github/org-1/repo-a`.
+
+Once cloned, a repository's `main` or `master` branch will be checked out.
+
+#### Example
+
+```
+repoUrls='git@github.com:org-1/repo-a.git; git@github.com:org-2/repo-b.git; git@github.com:org-1/repo-3.git'
+```
+
+### `from` and `to` (required)
+
+Take dates of the form `YYYY-MM-DD` specifying the time period over which repository activity should be analysed.
+
+Note: these parameters are not required by the `indentation` recipe.
+
+### `groups` (optional)
+
+Takes a semicolon-separated list of relative directory paths whose metrics will be aggregated. This allows you to perform architectural analysis by grouping at the level of packages, layers or even whole repositories.
+
+If you are only analysing a single repository, file paths are relative to the repository root directory. If you are analysing multiple repositories, file paths are prefixed with their local repository path, e.g. `com/github/org-1/repo-1`. 
+
+Each group is defined using the following syntax:
+
+```
+[relative directory path] => [group name]
+``` 
+
+Note this parameter has no effect on the behaviour of the following recipes:
+- [indentation](#indentation)
+- [indentation-trend](#indentation-trend)
+
+#### Example 1: analysing application and test code
+
+```
+groups='src => Application Code; tests/unit => Unit Tests; tests/e2e => E2E Tests'
+```
+
+#### Example 2: analysing MVC code
+```
+groups='src/models => Models; src/controller => Controller; src/views => Views'
+```
+
+#### Example 3: analysing repositories
+
+Note: assumes multiple repositories defined in `repoUrls`
+
+```
+groups='com/github/org-1/repo-a => Repo A; com/github/org-2/repo-b => Repo B'
+```
+
+### `groupByRepo` (optional)
+
+Set to `true` to automatically group by repository. Each group is named according to the repository's name. To avoid collisions when analysing multiple repositories with the same name (but different URLs), see [fullyQualifiedRepoNames](#fullyqualifiedreponames-optional);
+
+The following parameter combinations are equivalent
+
+```
+repoUrls='git@github.com:org-1/repo-a.git; git@github.com:org-2/repo-b.git' \
+groupByRepo=true 
+```
+```
+repoUrls='git@github.com:org-1/repo-a.git; git@github.com:org-2/repo-b.git' \
+groups='com/github/org-1/repo-a => repo-a; com/github/org-2/repo-b => repo-b'
+```
+
+### `fullyQualifiedRepoNames` (optional)
+
+Set to `true` whilst using `groupByRepo=true` to generate groups with fully-qualified repository names. This is useful for avoiding collisions when two repositories have the same name but different URLs. A repository with URL `git@github.com:org-1/repo-a.git` will have a group name of `com.github.org-1.repo-a`.
+
+## Analysis recipes
+
+### `change-summary`
+Reports the number of commits, number of files, number of separate changes to files and number of authors involved.
+
+### `change-frequency`
+Reports how many commits each file has appeared in.
+
+### `hotspots`
 Opens an interactive "circle packing" diagram showing code files, with highlighted red hotspots. The larger the circle, the more lines of code (a rough proxy for complexity). The darker the circle, the higher the frequency of change (correlates with deminishing quality and higher defect rate).
-```shell
-make hotspots repoUrl=<repository url> from=<YYYY-MM-DD> to=<YYYY-MM-DD> langs="<comma-separated language list>" excludeDirs="<excluded directory regex>" [groups]
-```
-Notes:
-- Valid values for `langs` can be listed by running `cloc --show-lang`. Examples include `PHP`, `JavaScript` and `TypeScript`.
-- `excludeDirs` takes a regex expression that is matched against the full path of each file's containing directory. Use `|` between alternative paths you wish to exclude. At a minimum, you should always exclude the path to third party libraries (e.g. `/node_modules/` in JavaScript or `./src/vendor` in PHP).  
-- See [Architectural analysis](#architectural-analysis) for explanation of `groups` parameter
 
-#### Hotspot table
-Prints a CSV of code files, sorted by frequency of change, and reporting the current number of lines of code and the number of changes in the specified time frame.
-```shell
-make hotspots-table repoUrl=<repository url> from=<YYYY-MM-DD> to=<YYYY-MM-DD> langs="<comma-separated language list>" excludeDirs="<excluded directory regex>" [groups]
-```
+You must set the `langs` parameter to a comma-separated list of programming languages that you would like `cloc` to count. For example, `langs=JavaScript,TypeScript'`. Valid values can be listed by running `cloc --show-lang`.
 
-Notes:
-- See [Interactive hotspot diagram](#interactive-hotspot-diagram) for details of parameter usage.
-- See [Architectural analysis](#architectural-analysis) for explanation of `groups` parameter
+### `hotspots-table`
+Prints a table of code files, sorted by change frequency. Each row includes the file's path, lines of code at the end of the analysed time period, and the number of commits it appeared in.
 
-#### File complexity
-Prints a single-row CSV of the `total`, `mean`, `standard deviation` and `maximum` number of indentations (tab or 4 spaces) in a specified file.
+As with the [hotspots](#hotspots) recipe, you must specify the `langs` parameter.
 
-Number of indentations is a useful proxy for complexity as it is correlated with the level of code nesting (e.g. nested `if` clauses). A high `maximum` (e.g. `6`) indicates areas of excessive complexity. If the `mean` is also high, the file may suffer from rampant complexity.
-```shell
-make indentation repoUrl=<repository url> file=<path to file relative to base of target repo>
-```
+### `indentation`
+Indicates the code complexity of a file (specified by the mandatory `file` parameter) by reporting the `total`, `mean`, `standard deviation` and `maximum` number of indentations (tab or 4 spaces) for the file.
 
-#### File complexity trend
-Generates and prints a CSV file for the specified code file, containing a row per commit over the specified time interval. Each row includes the `total`, `mean` and `standard deviation` number of indentations (tab or 4 spaces) at that point in time.
+The number of indentations is a useful proxy for complexity as it correlates with the level of code nesting (e.g. nested `if` clauses). A high `maximum` (e.g. `6`) indicates areas of excessive complexity. If the `mean` is also high, the file may suffer from rampant complexity.
 
-Number of indentations is a useful proxy for complexity as it is correlated with the level of code nesting (e.g. nested `if` clauses).
+The `file` parameter is relative to a repository's root directory. If you have provided multiple URLs in `repoUrls`, prefix the `file` parameter with repository's local file path, e.g. `com/github/org-1/repo-a/src/code.js`. 
 
-The CSV file can be found in `data/<repository name>/indentation-trend.csv`.
+### `indentation-trend`
+Generates and prints a CSV file that indicates the trend in complexity of a code file (specified by the mandatory `file` parameter). The CSV contains a row per commit over the analysed time period. Each row includes the `total`, `mean` and `standard deviation` number of indentations (tab or 4 spaces) at that point in time.
 
-After generating the CSV file, paste it into your favourite spreadsheet software and chart how `total`, `mean` and `standard deviation` change over time. This provides a view of the trend in complexity. For example, if the `total` steadily increases but there has been work to refactor the code, you should see a decline in the `mean` and `standard deviation`.
-```shell
-make indentation-trend repoUrl=<repository url> from=<YYYY-MM-DD> to=<YYYY-MM-DD> file=<path to file relative to base of target repo>
-```
+See [indentation](#indentation) for an explanation of why indentations are a useful proxy for complexity. The `file` parameter is treated the same way as in the `indentation` recipe. 
 
-#### Sum of coupling
-For each file, prints the number of times other files changed alongside it in the same commit
-```shell
-make sum-of-coupling repoUrl=<repository url> from=<YYYY-MM-DD> to=<YYYY-MM-DD> [groups]
-```
-Notes:
-- See [Architectural analysis](#architectural-analysis) for explanation of `groups` parameter
+The location of the generated CSV is reported on the command line. After it is generated, paste its contents into your favourite spreadsheet software and chart how `total`, `mean` and `standard deviation` change over time. This provides a view of the trend in complexity. For example, if the `total` steadily increases but there has been work to refactor the code, you should see a decline in the `mean` and `standard deviation`.
 
-#### Coupling
-For pairs of files, prints the % of shared commits and an average their respective number of commits
-```shell
-make coupling repoUrl=<repository url> from=<YYYY-MM-DD> to=<YYYY-MM-DD> [minRevisions=5] [minSharedRevisions=5] [minCoupling=30] [groups]
-```
-Notes:
-- The higher the average number of commits, the more we can rely on the reported % to inform our expectations about the future degree of coupling between these files.
-- We can use optional arguments to restrict the reported pairs to those that are more significant. Default values are listed above.
-  - `minRevisions` filters out files that have fewer total commits
-  - `minSharedRevisions` filters out pairs that have fewer total shared commits
-  - `minCoupling` filters out pairs that have a lower degree of coupling
-- See [Architectural analysis](#architectural-analysis) for explanation of `groups` parameter
+### `sum-of-coupling`
+For each file, prints the number of times it has shared a commit with another file.
 
-#### Authors
-For each file, prints the number of unique authors over the specific time period
-```shell
-make authors repoUrl=<repository url> from=<YYYY-MM-DD> to=<YYYY-MM-DD> [groups]
-```
-Notes:
-- See [Architectural analysis](#architectural-analysis) for explanation of `groups` parameter
+### `coupling`
+For pairs of files, prints the % of shared commits and their average number of commits. Only reports pairs that satisfy criteria specified by the following (optional) parameters:
 
-#### Main Developers
-Prints two lines for each file: one for the author who has added the most lines and one for the author who has removed the most lines. In both cases, the number of lines added or removed by the author is reported, alongside the total lines added / removed and the authors % contribution.
+- `minRevisions` (default: 5) - the minimum number commits each file must have appeared in
+- `minSharedRevisions` (default: 5) - the minimum number of commits the pair of files must share
+- `minCoupling` (default: 30) - the minimum % coupling of the file pair
 
-Removed lines is an approximate indication of the most prolific refactorer. This may be the true "most knowledgeable developer" for a given file, since lines added is subject to disruption from copy-paste behaviour.
-```shell
-make main-devs repoUrl=<repository url> from=<YYYY-MM-DD> to=<YYYY-MM-DD> [groups]
-```
-Notes:
-- See [Architectural analysis](#architectural-analysis) for explanation of `groups` parameter
+The higher the average number of commits, the more we can rely on the reported % to inform our expectations about the future degree of coupling between these files.
 
-#### Entity Ownership
-Prints a line for each file and each author during the specific time period. Reports the number of lines added and removed by each author.
+### `authors`
+For each file, prints the number of unique authors.
+
+### `main-devs`
+Prints two lines for each file:
+
+- One for the author who has added the most lines
+- One for the author who has removed the most lines.
+
+In both cases, the number of lines added or removed by the author is reported, alongside the total lines added or removed and the authors % contribution.
+
+Removed lines is an approximate indication of the most prolific refactorer. This may be a more accurate indicator of the most knowledgeable developer for a given file, since lines added is subject to disruption from developers who practice copy-paste.
+
+### `entity-ownership`
+Reports the number of lines added and removed by per file, per author.
 
 Useful for investigating who the authors are and whether they have used multiple different aliases that should be merged in the log of file changes.
-```shell
-make entity-ownership repoUrl=<repository url> from=<YYYY-MM-DD> to=<YYYY-MM-DD> [groups]
-```
-Notes:
-- See [Architectural analysis](#architectural-analysis) for explanation of `groups` parameter
 
-### Architectural analysis
+## Clearing local data
 
-Instead of performing an analysis per file, you can define groups of files and analyse at the level of system layers or other architectural constructs. Specify how you wish to group files using the `groups` argument. For example:
+File change history and lines of code counts are cached between executions. Results are also written to disk.
 
-``groups="src/app => Code; src/tests/acceptance => AcceptanceTest; src/tests/api => ApiTest; src/tests/functional => FunctionalTest; src/tests/unit => UnitTest; ansible => Infrastructure""``
+To clear the cache and results, run `make clean-analyses`.
 
-Groups can also be defined in terms of exact-match regex patterns, e.g. `^src/apps/([^/]+/)*[^\.]+\.js\$$`. Note: double `$` due to behaviour of `make`
+To remove the cache, results _and_ the cloned repositories, run `make clean`.
 
-### Clearing cache and results
+## Refreshing repository history
 
-File change history is cached (per repository) between executions. Results are also written to disk.
-
-To clear the cache and results for a repository, run `make clean-repo-results repoUrl=<url name>`. To also remove the cloned repository, run `make clean-repo repoUrl=<url name>`.
-
-To clear all repositories and results, run `make clean`.
+Currently, there is no way recipe for pulling down changes for a repository. You can either manually run `git pull` from inside the repository directory or delete the repository and re-run the analysis.
