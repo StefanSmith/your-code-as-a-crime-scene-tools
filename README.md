@@ -46,7 +46,7 @@ make change-summary repoUrls='git@github.com:org-1/repo-a.git' from=2021-05-01 t
 
 Takes a semicolon-separated list of ssh URLs for the repositories you wish to analyse.
 
-Each repository will be cloned into a subdirectory based on its URL and name. For example, a repository cloned using `git@github.com:org-1/repo-a.git` will be stored at `com/github/org-1/repo-a`.
+Each repository will be cloned into a subdirectory under `data/repositories/` based on the repository URL and name. For example, `git@github.com:org-1/repo-a.git` will be cloned into `com/github/org-1/repo-a`.
 
 Once cloned, a repository's `main` or `master` branch will be checked out.
 
@@ -55,6 +55,8 @@ Once cloned, a repository's `main` or `master` branch will be checked out.
 ```
 repoUrls='git@github.com:org-1/repo-a.git; git@github.com:org-2/repo-b.git; git@github.com:org-1/repo-3.git'
 ```
+
+Optionally, you can specify a relative directory path per repository by adding a pipe-delimited suffix to the URL. For example, passing `git@github.com:org-1/repo-a.git|prefix/path/` will clone the repository into `prefix/path/github/org-1/repo-a`. This can be used to organise repositories into hierarchies, e.g. by org structure. This can be useful when generating a hierarchical visualistion such as [hotspots](#hotspots).
 
 ### `from` and `to` (required)
 
