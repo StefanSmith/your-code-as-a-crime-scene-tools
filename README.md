@@ -184,9 +184,9 @@ Useful for investigating who the authors are and whether they have used multiple
 
 File change history and lines of code counts are cached between executions. Results are also written to disk.
 
-To clear the cache and results, run `make clean-analyses`.
+To clear the cache and results, run `make clean`.
 
-To remove the cache, results _and_ the cloned repositories, run `make clean`.
+To remove the cache, results _and_ the cloned repositories, run `make clean-all`.
 
 ## Refreshing repository history
 

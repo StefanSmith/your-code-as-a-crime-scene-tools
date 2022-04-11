@@ -63,13 +63,15 @@ ifdef groups
 	maatCommand:=$(maatCommand) -g $(maatGroupsFilePath)
 endif
 
-clean: clean-analyses
-	rm -rf "$(dataDirectoryPath)"
+usage:
+	@echo No recipe selected. Please see the README for details.
 
-clean-analyses:
+clean:
 	rm -rf "$(analysesDirectoryPath)"
 	rm -rf "$(enclosureDiagramDataDirectoryPath)"
 
+clean-all: clean
+	rm -rf "$(dataDirectoryPath)"
 validate-common-parameters:
 ifndef repoUrls
 	$(error repoUrls is undefined)
