@@ -7,7 +7,7 @@ repositoryDirectoryPath="${2}"
 
 scriptDirectoryPath=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
+"${scriptDirectoryPath}/checkout-repository-on-mainline.sh" "${repositoryDirectoryPath}"
 cd "${repositoryDirectoryPath}"
-git reset --hard "$("${scriptDirectoryPath}/get-repository-mainline-branch-name.sh" "${repositoryDirectoryPath}")"
 git reset --hard "$(git log --before="${date}" --pretty=format:%h -1)"
 git clean -fdx
