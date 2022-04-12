@@ -194,7 +194,7 @@ $(fileChangesLogFilePath): $(repositoryFileChangesLogFilePaths) | validate-commo
 $(repositoryFileChangesLogFilePaths): $(analysesDirectoryPath)/%/$(fileChangesLogFileName): | validate-date-range-parameters $(repositoriesDirectoryPath)/%
 	scripts/checkout-repository-on-mainline.sh "$(makefileDirectoryPath)/$(repositoriesDirectoryPath)/$*"
 	mkdir -p "$(@D)"
-	git -C "$(repositoriesDirectoryPath)/$*" log --all --numstat --date=short --pretty=format:'--%h--%ad--%aN' --no-renames --after="$(from)" --before=="$(to)" > "$@"
+	git -C "$(repositoriesDirectoryPath)/$*" log "$$(scripts/get-repository-mainline-branch-name.sh "$(makefileDirectoryPath)/$(repositoriesDirectoryPath)/$*")" --numstat --date=short --pretty=format:'--%h--%ad--%aN' --no-renames --after="$(from)" --before=="$(to)" > "$@"
 
 $(repositoriesDirectoryPath)/%: | validate-common-parameters
 	git clone "$$(scripts/pick-repository-url-for-path.sh "$(repoUrls)" "$*")" "$@"
