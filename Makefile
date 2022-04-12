@@ -161,7 +161,7 @@ $(linesOfCodeReportFilePath): $(repositoryLinesOfCodeReportFilePaths) | validate
 endif
 	mkdir -p "$(@D)"
 ifeq ($(crossRepositoryGrouping), true)
-	scripts/checkout-repositories-at-date.sh "$(to)" "$(repositoryDirectoryPaths)"
+	scripts/checkout-repositories-at-date.sh "$(to)" "$(repositoryDirectoryPaths)" "$(makefileDirectoryPath)"
 	scripts/cloc.sh "$(repositoriesDirectoryPath)" "$(clocParameters)" > "$@"
 else
 	scripts/merge-lines-of-code-reports.sh "$(repositoryLinesOfCodeReportFilePaths)" "$(analysesDirectoryPath)" "$(linesOfCodeReportFileName)" > "$@"
