@@ -13,5 +13,5 @@ fileChangesLogFilePaths="$(echo "${fileChangesLogFilePathsString}" | tr ' ' '\n'
 if [ "$(echo "${fileChangesLogFilePaths}" | wc -l)" -eq 1 ]; then
   cat "${fileChangesLogFilePaths}"
 else
-  echo "${fileChangesLogFilePaths}" | xargs -I {} "${scriptDirectoryPath}/prefix-file-changes-with-repo.sh" "{}" "${analysesDirectoryPath}" "${fileChangesLogFileRelativePath}"
+  echo "${fileChangesLogFilePaths}" | xargs -I {}  -S 2048 "${scriptDirectoryPath}/prefix-file-changes-with-repo.sh" "{}" "${analysesDirectoryPath}" "${fileChangesLogFileRelativePath}"
 fi
