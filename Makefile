@@ -129,14 +129,14 @@ indentation: validate-common-parameters validate-file-parameter $(repositoryDire
 ifneq ($(numberOfRepositories),"1")
 	$(error only one repository can be specified for this operation)
 endif
-	git -C "$(repositoryDirectoryPaths)" reset --hard origin/master || git -C "$(repositoryDirectoryPaths)" reset --hard origin/main && git -C "$(repositoryDirectoryPaths)" clean -fdx
+	git -C "$(repositoryDirectoryPaths)" reset --hard "$$(scripts/get-repository-mainline-branch-name.sh "$(makefileDirectoryPath)/$(repositoryDirectoryPaths)")" && git -C "$(repositoryDirectoryPaths)" clean -fdx
 	python maat-scripts/miner/complexity_analysis.py "$(repositoryDirectoryPaths)/$(file)"
 
 indentation-trend: validate-common-parameters validate-date-range-parameters validate-file-parameter $(repositoryDirectoryPaths)
 ifneq ($(numberOfRepositories),"1")
 	$(error only one repository can be specified for this operation)
 endif
-	git -C "$(repositoryDirectoryPaths)" reset --hard origin/master || git -C "$(repositoryDirectoryPaths)" reset --hard origin/main && git -C "$(repositoryDirectoryPaths)" clean -fdx
+	git -C "$(repositoryDirectoryPaths)" reset --hard "$$(scripts/get-repository-mainline-branch-name.sh "$(makefileDirectoryPath)/$(repositoryDirectoryPaths)")" && git -C "$(repositoryDirectoryPaths)" clean -fdx
 	cd "$(repositoryDirectoryPaths)" && python "$(makefileDirectoryPath)/maat-scripts/miner/git_complexity_trend.py" --start $(shell git -C "$(repositoryDirectoryPaths)" log --after=$(from) --pretty=format:%h --reverse | head -1) --end $(shell git -C "$(repositoryDirectoryPaths)" log --before=$(to) --pretty=format:%h -1) --file "$(file)" | tee "$(makefileDirectoryPath)/$(analysisDirectoryPath)/indentation-trend.csv" | less
 
 $(mainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) | validate-common-parameters
@@ -192,7 +192,7 @@ $(fileChangesLogFilePath): $(repositoryFileChangesLogFilePaths) | validate-commo
 	scripts/merge-file-changes.sh "$(repositoryFileChangesLogFilePaths)" "$(analysesDirectoryPath)" "$(fileChangesLogFileName)" > "$@"
 
 $(repositoryFileChangesLogFilePaths): $(analysesDirectoryPath)/%/$(fileChangesLogFileName): | validate-date-range-parameters $(repositoriesDirectoryPath)/%
-	git -C "$(repositoriesDirectoryPath)/$*" reset --hard origin/master || git -C "$(repositoriesDirectoryPath)/$*" reset --hard origin/main && git -C "$(repositoriesDirectoryPath)/$*" clean -fdx
+	git -C "$(repositoriesDirectoryPath)/$*" reset --hard "$$(scripts/get-repository-mainline-branch-name.sh "$(makefileDirectoryPath)/$(repositoriesDirectoryPath)/$*")" && git -C "$(repositoriesDirectoryPath)/$*" clean -fdx
 	mkdir -p "$(@D)"
 	git -C "$(repositoriesDirectoryPath)/$*" log --all --numstat --date=short --pretty=format:'--%h--%ad--%aN' --no-renames --after="$(from)" --before=="$(to)" > "$@"
 
