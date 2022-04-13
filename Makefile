@@ -31,15 +31,20 @@ analysesDirectoryPath=$(dataDirectoryPath)/analyses
 fileChangesLogFileName=file-changes-$(from)-$(to).log
 repositoryFileChangesLogFilePaths=$(shell scripts/foreach-repository-url.sh "$(repoUrls)" 'echo "$(analysesDirectoryPath)/$$(scripts/get-repository-path.sh "{repoUrl}")/$(fileChangesLogFileName)"')
 
+ifeq ($(crossRepositoryGrouping), true)
+clocParameters=$(langs)::::
+else
 clocParameters=$(langs)::::$(groups)
+endif
+
 linesOfCodeReportFileName=lines-of-code-report-$(to)-$(shell echo "$(clocParameters)" | md5sum | cut -d ' ' -f1).csv
 repositoryLinesOfCodeReportFilePaths=$(shell scripts/foreach-repository-url.sh "$(repoUrls)" 'echo "$(analysesDirectoryPath)/$$(scripts/get-repository-path.sh "{repoUrl}")/$(linesOfCodeReportFileName)"')
 
 analysisDirectoryPath=$(analysesDirectoryPath)/$(analysisId)
-linesOfCodeReportFilePath=$(analysisDirectoryPath)/$(linesOfCodeReportFileName)
 fileChangesLogFilePath=$(analysisDirectoryPath)/$(fileChangesLogFileName)
 
 intermediateAnalysisDirectoryPath=$(analysisDirectoryPath)/intermediate
+linesOfCodeReportFilePath=$(intermediateAnalysisDirectoryPath)/lines-of-code-report.csv
 changeFrequencyReportFilePath=$(intermediateAnalysisDirectoryPath)/change-frequency-report.csv
 mainDevReportFilePath=$(intermediateAnalysisDirectoryPath)/main-dev.csv
 refactoringMainDevReportFilePath=$(intermediateAnalysisDirectoryPath)/refactoring-main-dev.csv
@@ -50,6 +55,7 @@ enclosureDiagramRepoDataDirectoryPath=$(enclosureDiagramDataDirectoryPath)/$(ana
 hotspotEnclosureDiagramFilePath=$(enclosureDiagramRepoDataDirectoryPath)/hotspot-enclosure-diagram-data.json
 
 .INTERMEDIATE: $(changeFrequencyReportFilePath) \
+	$(linesOfCodeReportFilePath) \
 	$(hotspotEnclosureDiagramFilePath) \
 	$(mainDevReportFilePath) \
 	$(refactoringMainDevReportFilePath) \
@@ -154,15 +160,10 @@ $(changeFrequencyReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath
 	mkdir -p "$(@D)"
 	$(maatCommand) -a revisions > "$@"
 
-ifeq ($(crossRepositoryGrouping), true)
-$(linesOfCodeReportFilePath): $(repositoryDirectoryPaths) | validate-common-parameters
-else
 $(linesOfCodeReportFilePath): $(repositoryLinesOfCodeReportFilePaths) | validate-common-parameters
-endif
 	mkdir -p "$(@D)"
 ifeq ($(crossRepositoryGrouping), true)
-	scripts/checkout-repositories-at-date.sh "$(to)" "$(repositoryDirectoryPaths)" "$(makefileDirectoryPath)"
-	scripts/cloc.sh "$(repositoriesDirectoryPath)" "$(clocParameters)" > "$@"
+	scripts/aggregate-lines-of-code-reports.sh "$(repositoryLinesOfCodeReportFilePaths)" "$(analysesDirectoryPath)" "$(linesOfCodeReportFileName)" "$(groups)" > "$@"
 else
 	scripts/merge-lines-of-code-reports.sh "$(repositoryLinesOfCodeReportFilePaths)" "$(analysesDirectoryPath)" "$(linesOfCodeReportFileName)" > "$@"
 endif
