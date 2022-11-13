@@ -42,7 +42,7 @@ make change-summary repoUrls='git@github.com:org-1/repo-a.git' from=2021-05-01 t
 
 ## Common recipe parameters
 
-### `repoUrls` (required)
+### `repoUrls` (required unless `repoUrlsFile` specified)
 
 Takes a semicolon-separated list of ssh URLs for the repositories you wish to analyse.
 
@@ -57,6 +57,10 @@ repoUrls='git@github.com:org-1/repo-a.git; git@github.com:org-2/repo-b.git; git@
 ```
 
 Optionally, you can specify a relative directory path per repository by adding a pipe-delimited suffix to the URL. For example, passing `git@github.com:org-1/repo-a.git|prefix/path/` will clone the repository into `prefix/path/github/org-1/repo-a`. This can be used to organise repositories into hierarchies, e.g. by org structure. This can be useful when generating a hierarchical visualistion such as [hotspots](#hotspots).
+
+### `repoUrlsFile` (required unless `repoUrls` specified)
+
+Takes the path to a file containing a list of git repositories to analyse. Useful for when you want to analyse a large number of repositories at once. Supports the same repository specification format as `repoUrls` but separates each repository using a new line instead of a semicolon.
 
 ### `from` and `to` (required)
 

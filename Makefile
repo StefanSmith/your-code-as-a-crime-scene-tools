@@ -1,4 +1,4 @@
-.PHONEY: clean clean-analyses validate-common-parameters validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend
+.PHONEY: clean clean-analyses validate-common-parameters validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend fetch-source
 
 port=9000
 minRevisions=5
@@ -9,6 +9,10 @@ fullyQualifiedRepoNames=false
 
 ifeq ($(groupByRepo), true)
 override groups=$(shell scripts/foreach-repository-url.sh "$(repoUrls)" 'echo "$$(scripts/get-repository-path.sh "{repoUrl}") => $$(scripts/get-repository-name.sh "{repoUrl}" "$(fullyQualifiedRepoNames)");"')
+endif
+
+ifdef repoUrlsFile
+override repoUrls=$(shell tr '\n' ';' < "$(repoUrlsFile)")
 endif
 
 ifdef repoUrls
@@ -80,9 +84,11 @@ clean:
 
 clean-all: clean
 	rm -rf "$(dataDirectoryPath)"
+
 validate-common-parameters:
-ifndef repoUrls
-	$(error repoUrls is undefined)
+ifeq ($(or $(repoUrls),$(repoUrlsFile)),)
+	# all arguments evaluated to empty strings
+	$(error neither repoUrls nor repoUrlsFile is undefined)
 endif
 
 validate-date-range-parameters:
