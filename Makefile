@@ -23,6 +23,7 @@ endif
 
 dataDirectoryPath=data
 repositoriesDirectoryPath=$(dataDirectoryPath)/repositories
+repositoryUrlsToPathsMappingFile=$(repositoriesDirectoryPath)/repositoryUrlsToPaths.csv
 repositoryDirectoryPaths=$(shell scripts/foreach-repository-url.sh "$(repoUrls)" 'echo "$(repositoriesDirectoryPath)/$$(scripts/get-repository-path.sh "{repoUrl}")"')
 
 analysisId=$(shell scripts/parse-repository-urls.sh "$(repoUrls)" | md5sum | cut -d ' ' -f1)
@@ -59,7 +60,8 @@ hotspotEnclosureDiagramFilePath=$(enclosureDiagramRepoDataDirectoryPath)/hotspot
 	$(hotspotEnclosureDiagramFilePath) \
 	$(mainDevReportFilePath) \
 	$(refactoringMainDevReportFilePath) \
-	$(maatGroupsFilePath)
+	$(maatGroupsFilePath) \
+	$(repositoryUrlsToPathsMappingFile)
 
 makefileDirectoryPath := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
@@ -195,5 +197,8 @@ $(repositoryFileChangesLogFilePaths): $(analysesDirectoryPath)/%/$(fileChangesLo
 	mkdir -p "$(@D)"
 	git -C "$(repositoriesDirectoryPath)/$*" log "$$(scripts/get-repository-mainline-branch-name.sh "$(makefileDirectoryPath)/$(repositoriesDirectoryPath)/$*")" --numstat --date=short --pretty=format:'--%h--%ad--%aN' --no-renames --after="$(from)" --before=="$(to)" > "$@"
 
-$(repositoriesDirectoryPath)/%: | validate-common-parameters
-	git clone "$$(scripts/pick-repository-url-for-path.sh "$(repoUrls)" "$*")" "$@"
+$(repositoriesDirectoryPath)/%: | validate-common-parameters $(repositoryUrlsToPathsMappingFile)
+	git clone "$$(scripts/pick-repository-url-for-path.sh "$*" "$(makefileDirectoryPath)/$(repositoryUrlsToPathsMappingFile)")" "$@"
+
+$(repositoryUrlsToPathsMappingFile):
+	scripts/foreach-repository-url.sh "$(repoUrls)" 'echo "$$(scripts/get-repository-path.sh "{repoUrl}"),{repoUrl}"' > "$@"
