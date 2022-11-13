@@ -188,6 +188,12 @@ To clear the cache and results, run `make clean`.
 
 To remove the cache, results _and_ the cloned repositories, run `make clean-all`.
 
+## Fetching repositories
+
+By default, repositories specified in `repoUrls` will be cloned just in time when executing an analysis recipe. If you are planning to work offline, you may wish to clone repositories upfront. Since analysis can takes time, there is a dedicated recipe for simply fetching repositories.
+
+Just run `make fetch-source` and specify the `repoUrls` parameter as usual.
+
 ## Refreshing repository history
 
 Currently, there is no way recipe for pulling down changes for a repository. You can either manually run `git pull` from inside the repository directory or delete the repository and re-run the analysis.

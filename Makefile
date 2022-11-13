@@ -99,6 +99,8 @@ ifndef file
 	$(error file is undefined)
 endif
 
+fetch-source: validate-common-parameters $(repositoryDirectoryPaths)
+
 change-summary: validate-common-parameters $(fileChangesLogFilePath)
 ifdef groups
 	$(error change summary report does not support grouping)
