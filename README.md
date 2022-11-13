@@ -37,8 +37,10 @@ Follow the installation instructions at https://github.com/AlDanial/cloc.
 To run an analysis, call one of the `make` recipes documented in [Analysis recipes](#analysis-recipes), specifying which repositories to analyse and over what time period, for example:
 
 ```
-make change-summary repoUrls='git@github.com:org-1/repo-a.git' from=2021-05-01 to=2022-03-01
+make -j change-summary repoUrls='git@github.com:org-1/repo-a.git' from=2021-05-01 to=2022-03-01
 ```
+
+Note: passing `-j` instructs make to execute recipes in parallel where possible.
 
 ## Common recipe parameters
 
@@ -196,7 +198,7 @@ To remove the cache, results _and_ the cloned repositories, run `make clean-all`
 
 By default, repositories specified in `repoUrls` will be cloned just in time when executing an analysis recipe. If you are planning to work offline, you may wish to clone repositories upfront. Since analysis can takes time, there is a dedicated recipe for simply fetching repositories.
 
-Just run `make fetch-source` and specify the `repoUrls` parameter as usual.
+Just run `make -j fetch-source` and specify the `repoUrls` parameter as usual.
 
 ## Refreshing repository history
 
