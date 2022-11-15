@@ -11,10 +11,12 @@ groupsExpression="$(sed -n 2p <<< "${parameters}" | xargs)"
 
 cd "${targetDirectory}"
 
-clocCommand='cloc ./ --by-file --csv --quiet --include-lang='"${langs}"
+clocCommand=(cloc ./ --by-file --csv --quiet "--include-lang=${langs}")
+
+clocStderrFile=$(mktemp)
 
 if [ -z "${groupsExpression:-}" ]; then
-  ${clocCommand}
+  clocStdout=$("${clocCommand[@]}" 2>"${clocStderrFile}")
 else
   echo "language,filename,blank,comment,code"
 
@@ -26,9 +28,22 @@ else
       relativePath="$(xargs <<< "${i%=>*}")"
 
       # TODO: Support regex instead of relative path
-      ${clocCommand} --fullpath --match-f="^./${relativePath}/" | (grep ^SUM || echo 'SUM,,0,0,0') | sed "s/^SUM,,/SUM,${groupName},/" | grep -v ",0,0,0" || true
-
+      clocStdout="$("${clocCommand[@]}" --fullpath --match-f="^./${relativePath}/" 2>"${clocStderrFile}" | (grep ^SUM || echo 'SUM,,0,0,0') | sed "s/^SUM,,/SUM,${groupName},/" | grep -v ",0,0,0" || true)"
     done
   done <<< "${groupsExpression}"
 
 fi
+
+clocStderr="$(<"${clocStderrFile}")"
+
+if [ -n "${clocStderr}" ]; then
+  echo "Aborting because cloc reported the following error when analysing ${targetDirectory}: ${clocStderr}" >&2
+  exit 1
+fi
+
+if [ -z "${clocStdout}" ]; then
+  echo "Aborting because cloc failed to produce any results when analysing ${targetDirectory}" >&2
+  exit 1
+fi
+
+echo "${clocStdout}"
