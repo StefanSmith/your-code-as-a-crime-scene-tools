@@ -5,4 +5,4 @@ set -o pipefail -o nounset -o errexit
 repositoryDirectoryPath="${1}"
 
 cd "${repositoryDirectoryPath}"
-head -n1 <<< "$(git branch -r | grep -o '\borigin/main$' || git branch -r | grep -o '\borigin/master$' || git branch -r | grep -o '\borigin/develop$')"
+head -n1 <<< "$(git symbolic-ref refs/remotes/origin/HEAD | cut -d '/' -f4)"
