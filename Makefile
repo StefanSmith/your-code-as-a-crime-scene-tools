@@ -127,8 +127,8 @@ change-frequency: validate-common-parameters $(changeFrequencyReportFilePath)
 sum-of-coupling: validate-common-parameters $(maatGroupsFilePath) $(fileChangesLogFilePath)
 	$(maatCommand) -a soc | tee "$(analysisDirectoryPath)/sum-of-coupling.csv" | less
 
-ifeq ($(sameDayCoupling), true)
-maatCouplingTemporalPeriodOption=--temporal-period 1
+ifdef couplingDays
+maatCouplingTemporalPeriodOption=--temporal-period $(couplingDays)
 endif
 
 coupling: validate-common-parameters $(maatGroupsFilePath) $(fileChangesLogFilePath)

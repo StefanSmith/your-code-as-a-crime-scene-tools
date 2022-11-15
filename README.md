@@ -168,6 +168,8 @@ For pairs of files, prints the % of shared commits and their average number of c
 
 The higher the average number of commits, the more we can rely on the reported % to inform our expectations about the future degree of coupling between these files.
 
+By default, coupling analysis only considers changes within the same commit. For cross-repository analysis, you can instead consider changes within a given time frame (in days). Specify a number of days using the optional `couplingDays` parameter.
+
 ### `authors`
 For each file, prints the number of unique authors.
 
