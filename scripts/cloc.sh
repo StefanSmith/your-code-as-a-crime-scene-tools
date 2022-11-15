@@ -42,8 +42,7 @@ if [ -n "${clocStderr}" ]; then
 fi
 
 if [ -z "${clocStdout}" ]; then
-  echo "Aborting because cloc failed to produce any results when analysing ${targetDirectory}" >&2
-  exit 1
+  printf "\nlanguage,filename,blank,comment,code\nSUM,,0,0,0"
 fi
 
 echo "${clocStdout}"
