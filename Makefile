@@ -1,4 +1,4 @@
- .DELETE_ON_ERROR:
+.DELETE_ON_ERROR:
 
 .PHONEY: clean clean-analyses validate-common-parameters validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend fetch-source
 
