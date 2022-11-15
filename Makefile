@@ -14,7 +14,7 @@ override groups=$(shell scripts/foreach-repository-url.sh 'echo "$$(scripts/get-
 endif
 
 ifdef repoUrlsFile
-override repoUrls=$(shell tr '\n' ';' < "$(repoUrlsFile)")
+override repoUrls=$(shell grep -v '^\#' "$(repoUrlsFile)" | tr '\n' ';')
 endif
 
 ifdef repoUrls
