@@ -71,7 +71,7 @@ hotspotEnclosureDiagramFilePath=$(enclosureDiagramRepoDataDirectoryPath)/hotspot
 
 makefileDirectoryPath := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-maatCommand=maat -l "$(fileChangesLogFilePath)" -c git2
+maatCommand=scripts/redirect-stdout-to-stderr-on-failure.sh maat -l "$(fileChangesLogFilePath)" -c git2
 
 ifdef groups
 	maatCommand:=$(maatCommand) -g $(maatGroupsFilePath)
