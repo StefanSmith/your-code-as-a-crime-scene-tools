@@ -2,8 +2,8 @@
 
 set -o pipefail -o nounset -o errexit
 
-repositoryUrls="${1}"
-repositoryUrlScript="${2}"
+repositoryUrlScript="${1}"
+repositoryUrls="${2}"
 
 scriptDirectoryPath=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 

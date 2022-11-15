@@ -10,7 +10,7 @@ groupByRepo=false
 fullyQualifiedRepoNames=false
 
 ifeq ($(groupByRepo), true)
-override groups=$(shell scripts/foreach-repository-url.sh "$(repoUrls)" 'echo "$$(scripts/get-repository-path.sh "{repoUrl}") => $$(scripts/get-repository-name.sh "{repoUrl}" "$(fullyQualifiedRepoNames)");"')
+override groups=$(shell scripts/foreach-repository-url.sh 'echo "$$(scripts/get-repository-path.sh "{repoUrl}") => $$(scripts/get-repository-name.sh "{repoUrl}" "$(fullyQualifiedRepoNames)");"' "$(repoUrls)")
 endif
 
 ifdef repoUrlsFile
@@ -30,13 +30,13 @@ endif
 dataDirectoryPath=data
 repositoriesDirectoryPath=$(dataDirectoryPath)/repositories
 repositoryUrlsToPathsMappingFile=$(repositoriesDirectoryPath)/repositoryUrlsToPaths.csv
-repositoryDirectoryPaths=$(shell scripts/foreach-repository-url.sh "$(repoUrls)" 'echo "$(repositoriesDirectoryPath)/$$(scripts/get-repository-path.sh "{repoUrl}")"')
+repositoryDirectoryPaths=$(shell scripts/foreach-repository-url.sh 'echo "$(repositoriesDirectoryPath)/$$(scripts/get-repository-path.sh "{repoUrl}")"' "$(repoUrls)")
 
 analysisId=$(shell scripts/parse-repository-urls.sh "$(repoUrls)" | md5sum | cut -d ' ' -f1)
 analysesDirectoryPath=$(dataDirectoryPath)/analyses
 
 fileChangesLogFileName=file-changes-$(from)-$(to).log
-repositoryFileChangesLogFilePaths=$(shell scripts/foreach-repository-url.sh "$(repoUrls)" 'echo "$(analysesDirectoryPath)/$$(scripts/get-repository-path.sh "{repoUrl}")/$(fileChangesLogFileName)"')
+repositoryFileChangesLogFilePaths=$(shell scripts/foreach-repository-url.sh 'echo "$(analysesDirectoryPath)/$$(scripts/get-repository-path.sh "{repoUrl}")/$(fileChangesLogFileName)"' "$(repoUrls)")
 
 ifeq ($(crossRepositoryGrouping), true)
 clocParameters=$(langs)::::
@@ -45,7 +45,7 @@ clocParameters=$(langs)::::$(groups)
 endif
 
 linesOfCodeReportFileName=lines-of-code-report-$(to)-$(shell echo "$(clocParameters)" | md5sum | cut -d ' ' -f1).csv
-repositoryLinesOfCodeReportFilePaths=$(shell scripts/foreach-repository-url.sh "$(repoUrls)" 'echo "$(analysesDirectoryPath)/$$(scripts/get-repository-path.sh "{repoUrl}")/$(linesOfCodeReportFileName)"')
+repositoryLinesOfCodeReportFilePaths=$(shell scripts/foreach-repository-url.sh 'echo "$(analysesDirectoryPath)/$$(scripts/get-repository-path.sh "{repoUrl}")/$(linesOfCodeReportFileName)"' "$(repoUrls)")
 
 analysisDirectoryPath=$(analysesDirectoryPath)/$(analysisId)
 fileChangesLogFilePath=$(analysisDirectoryPath)/$(fileChangesLogFileName)
@@ -211,4 +211,4 @@ $(repositoriesDirectoryPath)/%: | validate-common-parameters $(repositoryUrlsToP
 	git clone "$$(scripts/pick-repository-url-for-path.sh "$*" "$(makefileDirectoryPath)/$(repositoryUrlsToPathsMappingFile)")" "$@"
 
 $(repositoryUrlsToPathsMappingFile):
-	scripts/foreach-repository-url.sh "$(repoUrls)" 'echo "$$(scripts/get-repository-path.sh "{repoUrl}"),{repoUrl}"' > "$@"
+	scripts/foreach-repository-url.sh 'echo "$$(scripts/get-repository-path.sh "{repoUrl}"),{repoUrl}"' "$(repoUrls)" > "$@"
