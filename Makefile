@@ -56,14 +56,13 @@ changeFrequencyReportFilePath=$(intermediateAnalysisDirectoryPath)/change-freque
 mainDevReportFilePath=$(intermediateAnalysisDirectoryPath)/main-dev.csv
 refactoringMainDevReportFilePath=$(intermediateAnalysisDirectoryPath)/refactoring-main-dev.csv
 maatGroupsFilePath=$(intermediateAnalysisDirectoryPath)/maat-groups.txt
+hotspotEnclosureDiagramFilePath=$(analysisDirectoryPath)/hotspot-enclosure-diagram.html
 
 enclosureDiagramDataDirectoryPath=enclosure-diagram/data
 enclosureDiagramRepoDataDirectoryPath=$(enclosureDiagramDataDirectoryPath)/$(analysisId)
-hotspotEnclosureDiagramFilePath=$(enclosureDiagramRepoDataDirectoryPath)/hotspot-enclosure-diagram-data.json
 
 .INTERMEDIATE: $(changeFrequencyReportFilePath) \
 	$(linesOfCodeReportFilePath) \
-	$(hotspotEnclosureDiagramFilePath) \
 	$(mainDevReportFilePath) \
 	$(refactoringMainDevReportFilePath) \
 	$(maatGroupsFilePath) \
@@ -116,7 +115,7 @@ endif
 	$(maatCommand) -a summary | tee "$(analysisDirectoryPath)/change-summary.csv" | less
 
 hotspots: validate-common-parameters $(hotspotEnclosureDiagramFilePath)
-	./scripts/open-enclosure-diagram.sh $(port) "$(makefileDirectoryPath)/$(hotspotEnclosureDiagramFilePath)"
+	open "$(makefileDirectoryPath)/$(hotspotEnclosureDiagramFilePath)"
 
 hotspots-table: validate-common-parameters $(changeFrequencyReportFilePath) $(linesOfCodeReportFilePath)
 	python maat-scripts/merge/merge_comp_freqs.py "$(changeFrequencyReportFilePath)" "$(linesOfCodeReportFilePath)" | tee "$(analysisDirectoryPath)/hotspots.csv" | less
@@ -166,7 +165,7 @@ $(refactoringMainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFileP
 
 $(hotspotEnclosureDiagramFilePath): $(changeFrequencyReportFilePath) $(linesOfCodeReportFilePath) | validate-common-parameters
 	mkdir -p "$(@D)"
-	python "$(makefileDirectoryPath)/maat-scripts/transform/csv_as_enclosure_json.py" --structure "$(linesOfCodeReportFilePath)" --weights "$(changeFrequencyReportFilePath)" > "$@"
+	scripts/generate-hotspot-enclosure-diagram.sh "$(linesOfCodeReportFilePath)" "$(changeFrequencyReportFilePath)" > "$@"
 
 $(changeFrequencyReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) | validate-common-parameters
 	mkdir -p "$(@D)"
