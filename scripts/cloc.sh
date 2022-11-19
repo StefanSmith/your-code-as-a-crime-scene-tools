@@ -11,7 +11,7 @@ groupsExpression="$(sed -n 2p <<< "${parameters}" | xargs)"
 
 cd "${targetDirectory}"
 
-clocCommand=(cloc ./ --by-file --csv --quiet "--include-lang=${langs}")
+clocCommand=(cloc ./ --by-file --timeout=0 --csv --quiet "--include-lang=${langs}")
 
 clocStderrFile=$(mktemp)
 
