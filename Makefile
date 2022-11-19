@@ -32,7 +32,7 @@ repositoriesDirectoryPath=$(dataDirectoryPath)/repositories
 repositoryUrlsToPathsMappingFile=$(repositoriesDirectoryPath)/repositoryUrlsToPaths.csv
 repositoryDirectoryPaths=$(shell scripts/foreach-repository-url.sh 'echo "$(repositoriesDirectoryPath)/$$(scripts/get-repository-path.sh "{repoUrl}")"' "$(repoUrls)")
 
-analysisId=$(shell scripts/parse-repository-urls.sh "$(repoUrls)" | md5sum | cut -d ' ' -f1)
+analysisId=$(shell scripts/parse-repository-urls.sh "$(repoUrls)" | { cat; echo "$(groups)"; } | md5sum | cut -d ' ' -f1 )
 analysesDirectoryPath=$(dataDirectoryPath)/analyses
 
 fileChangesLogFileName=file-changes-$(from)-$(to).log
