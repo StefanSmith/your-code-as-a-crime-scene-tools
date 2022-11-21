@@ -62,9 +62,6 @@ refactoringMainDevReportFilePath:=$(intermediateAnalysisDirectoryPath)/refactori
 maatGroupsFilePath:=$(intermediateAnalysisDirectoryPath)/maat-groups.txt
 hotspotEnclosureDiagramFilePath:=$(analysisDirectoryPath)/hotspot-enclosure-diagram.html
 
-enclosureDiagramDataDirectoryPath=enclosure-diagram/data
-enclosureDiagramRepoDataDirectoryPath:=$(enclosureDiagramDataDirectoryPath)/$(analysisId)
-
 .INTERMEDIATE: $(changeFrequencyReportFilePath) \
 	$(linesOfCodeReportFilePath) \
 	$(mainDevReportFilePath) \
@@ -84,7 +81,6 @@ default:
 
 clean:
 	rm -rf "$(analysesDirectoryPath)"
-	rm -rf "$(enclosureDiagramDataDirectoryPath)"
 
 clean-all: clean
 	rm -rf "$(dataDirectoryPath)"
