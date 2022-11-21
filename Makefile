@@ -34,7 +34,6 @@ endif
 
 dataDirectoryPath=data
 repositoriesDirectoryPath:=$(dataDirectoryPath)/repositories
-repositoryUrlsToPathsMappingFile:=$(repositoriesDirectoryPath)/repositoryUrlsToPaths.csv
 repositoryDirectoryPaths:=$(shell cut -d',' -f5 "$(repositoryTableFilePath)" | sed -E 's@^@$(repositoriesDirectoryPath)/@')
 
 analysisId:=$(shell { cat "$(repositoryTableFilePath)"; echo "$(groups)"; } | md5sum | cut -d ' ' -f1 )
@@ -70,8 +69,7 @@ enclosureDiagramRepoDataDirectoryPath:=$(enclosureDiagramDataDirectoryPath)/$(an
 	$(linesOfCodeReportFilePath) \
 	$(mainDevReportFilePath) \
 	$(refactoringMainDevReportFilePath) \
-	$(maatGroupsFilePath) \
-	$(repositoryUrlsToPathsMappingFile)
+	$(maatGroupsFilePath)
 
 makefileDirectoryPath := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
@@ -211,8 +209,5 @@ $(repositoryFileChangesLogFilePaths): $(analysesDirectoryPath)/%/$(fileChangesLo
 	mkdir -p "$(@D)"
 	git -C "$(repositoriesDirectoryPath)/$*" log "$$(scripts/get-repository-mainline-branch-name.sh "$(makefileDirectoryPath)/$(repositoriesDirectoryPath)/$*")" --numstat --date=short --pretty=format:'--%h--%ad--%aN' --no-renames --after="$(from)" --before=="$(to)" > "$@"
 
-$(repositoriesDirectoryPath)/%: | validate-common-parameters $(repositoryUrlsToPathsMappingFile)
-	git clone "$$(scripts/pick-repository-url-for-path.sh "$*" "$(makefileDirectoryPath)/$(repositoryUrlsToPathsMappingFile)")" "$@"
-
-$(repositoryUrlsToPathsMappingFile):
-	scripts/foreach-repository-url.sh 'echo "$$(scripts/get-repository-path.sh "{repoUrl}"),{repoUrl}"' "$(repoUrls)" > "$@"
+$(repositoriesDirectoryPath)/%: | validate-common-parameters
+	git clone "$(shell grep ',$*$$' "$(repositoryTableFilePath)" | awk -F ',' '{ print $$1 }')" "$@"
