@@ -81,8 +81,8 @@ ifdef groups
 	maatCommand:=$(maatCommand) -g $(maatGroupsFilePath)
 endif
 
-usage:
-	@echo No recipe selected. Please see the README for details.
+default:
+	$(error No target specified)
 
 clean:
 	rm -rf "$(analysesDirectoryPath)"
