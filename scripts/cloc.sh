@@ -18,7 +18,7 @@ clocStderrFile=$(mktemp)
 if [ -z "${groupsExpression:-}" ]; then
   clocStdout=$("${clocCommand[@]}" 2>"${clocStderrFile}")
 else
-  echo "language,filename,blank,comment,code"
+  clocStdout=''
 
   while IFS=';' read -ra ADDR; do
     for i in "${ADDR[@]}"; do
@@ -28,9 +28,19 @@ else
       relativePath="$(xargs <<< "${i%=>*}")"
 
       # TODO: Support regex instead of relative path
-      clocStdout="$("${clocCommand[@]}" --fullpath --match-f="^./${relativePath}/" 2>"${clocStderrFile}" | (grep ^SUM || echo 'SUM,,0,0,0') | sed "s/^SUM,,/SUM,${groupName},/" | grep -v ",0,0,0" || true)"
+      groupClocStdout="$("${clocCommand[@]}" --fullpath --match-f="^./${relativePath}/" 2>"${clocStderrFile}" | (grep ^SUM || echo 'SUM,,0,0,0') | sed "s/^SUM,,/SUM,${groupName},/" | grep -v ",0,0,0" || true)"
+
+      if [ -n "${groupClocStdout}" ]; then
+        # Intentional formatting to insert new line
+        clocStdout="${clocStdout}
+${groupClocStdout}"
+      fi
     done
   done <<< "${groupsExpression}"
+
+  if [ -n "${clocStdout}" ]; then
+    clocStdout="language,filename,blank,comment,code${clocStdout}"
+  fi
 
 fi
 
@@ -42,7 +52,9 @@ if [ -n "${clocStderr}" ]; then
 fi
 
 if [ -z "${clocStdout}" ]; then
-  printf "\nlanguage,filename,blank,comment,code\nSUM,,0,0,0"
+  # Intentional formatting to insert new line
+  clocStdout="language,filename,blank,comment,code
+SUM,,0,0,0"
 fi
 
 echo "${clocStdout}"
