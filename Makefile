@@ -24,9 +24,8 @@ override groups:=$(shell scripts/get-group-per-repository.sh "$(repositoryTableF
 endif
 
 ifdef repoUrls
-# xargs trims whitespace
-numberOfRepositories="$(shell scripts/parse-repository-urls.sh "$(repoUrls)" | wc -l | xargs)"
-ifneq ($(numberOfRepositories), "1")
+numberOfRepositories:=$(shell wc -l "$(repositoryTableFilePath)" | awk '{ print $$1 }')
+ifneq ($(numberOfRepositories), 1)
 ifdef groups
 crossRepositoryGrouping=true
 endif
