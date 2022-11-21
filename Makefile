@@ -52,19 +52,19 @@ endif
 linesOfCodeReportFileName:=lines-of-code-report-$(to)-$(shell echo "$(clocParameters)" | md5sum | cut -d ' ' -f1).csv
 repositoryLinesOfCodeReportFilePaths:=$(shell cut -d',' -f5 "$(repositoryTableFilePath)" | sed -E 's@(.+)@$(analysesDirectoryPath)/\1/$(linesOfCodeReportFileName)@')
 
-analysisDirectoryPath=$(analysesDirectoryPath)/$(analysisId)
-fileChangesLogFilePath=$(analysisDirectoryPath)/$(fileChangesLogFileName)
+analysisDirectoryPath:=$(analysesDirectoryPath)/$(analysisId)
+fileChangesLogFilePath:=$(analysisDirectoryPath)/$(fileChangesLogFileName)
 
-intermediateAnalysisDirectoryPath=$(analysisDirectoryPath)/intermediate
-linesOfCodeReportFilePath=$(intermediateAnalysisDirectoryPath)/lines-of-code-report.csv
-changeFrequencyReportFilePath=$(intermediateAnalysisDirectoryPath)/change-frequency-report.csv
-mainDevReportFilePath=$(intermediateAnalysisDirectoryPath)/main-dev.csv
-refactoringMainDevReportFilePath=$(intermediateAnalysisDirectoryPath)/refactoring-main-dev.csv
-maatGroupsFilePath=$(intermediateAnalysisDirectoryPath)/maat-groups.txt
-hotspotEnclosureDiagramFilePath=$(analysisDirectoryPath)/hotspot-enclosure-diagram.html
+intermediateAnalysisDirectoryPath:=$(analysisDirectoryPath)/intermediate
+linesOfCodeReportFilePath:=$(intermediateAnalysisDirectoryPath)/lines-of-code-report.csv
+changeFrequencyReportFilePath:=$(intermediateAnalysisDirectoryPath)/change-frequency-report.csv
+mainDevReportFilePath:=$(intermediateAnalysisDirectoryPath)/main-dev.csv
+refactoringMainDevReportFilePath:=$(intermediateAnalysisDirectoryPath)/refactoring-main-dev.csv
+maatGroupsFilePath:=$(intermediateAnalysisDirectoryPath)/maat-groups.txt
+hotspotEnclosureDiagramFilePath:=$(analysisDirectoryPath)/hotspot-enclosure-diagram.html
 
 enclosureDiagramDataDirectoryPath=enclosure-diagram/data
-enclosureDiagramRepoDataDirectoryPath=$(enclosureDiagramDataDirectoryPath)/$(analysisId)
+enclosureDiagramRepoDataDirectoryPath:=$(enclosureDiagramDataDirectoryPath)/$(analysisId)
 
 .INTERMEDIATE: $(changeFrequencyReportFilePath) \
 	$(linesOfCodeReportFilePath) \
@@ -75,7 +75,7 @@ enclosureDiagramRepoDataDirectoryPath=$(enclosureDiagramDataDirectoryPath)/$(ana
 
 makefileDirectoryPath := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-maatCommand=scripts/redirect-stdout-to-stderr-on-failure.sh maat -l "$(fileChangesLogFilePath)" -c git2
+maatCommand:=scripts/redirect-stdout-to-stderr-on-failure.sh maat -l "$(fileChangesLogFilePath)" -c git2
 
 ifdef groups
 	maatCommand:=$(maatCommand) -g $(maatGroupsFilePath)
@@ -132,7 +132,7 @@ sum-of-coupling: validate-common-parameters $(maatGroupsFilePath) $(fileChangesL
 	$(maatCommand) -a soc | tee "$(analysisDirectoryPath)/sum-of-coupling.csv" | less
 
 ifdef couplingDays
-maatCouplingTemporalPeriodOption=--temporal-period $(couplingDays)
+maatCouplingTemporalPeriodOption:=--temporal-period $(couplingDays)
 endif
 
 coupling: validate-common-parameters $(maatGroupsFilePath) $(fileChangesLogFilePath)
