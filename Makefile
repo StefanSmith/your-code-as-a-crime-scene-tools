@@ -35,7 +35,7 @@ endif
 dataDirectoryPath=data
 repositoriesDirectoryPath:=$(dataDirectoryPath)/repositories
 repositoryUrlsToPathsMappingFile:=$(repositoriesDirectoryPath)/repositoryUrlsToPaths.csv
-repositoryDirectoryPaths=$(shell scripts/foreach-repository-url.sh 'echo "$(repositoriesDirectoryPath)/$$(scripts/get-repository-path.sh "{repoUrl}")"' "$(repoUrls)")
+repositoryDirectoryPaths:=$(shell cut -d',' -f5 "$(repositoryTableFilePath)" | sed -E 's@^@$(repositoriesDirectoryPath)/@')
 
 analysisId=$(shell scripts/parse-repository-urls.sh "$(repoUrls)" | { cat; echo "$(groups)"; } | md5sum | cut -d ' ' -f1 )
 analysesDirectoryPath=$(dataDirectoryPath)/analyses
