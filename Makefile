@@ -49,8 +49,8 @@ ifneq ($(crossRepositoryGrouping), true)
 clocParameters:=$(clocParameters)$(groups)
 endif
 
-linesOfCodeReportFileName=lines-of-code-report-$(to)-$(shell echo "$(clocParameters)" | md5sum | cut -d ' ' -f1).csv
-repositoryLinesOfCodeReportFilePaths=$(shell scripts/foreach-repository-url.sh 'echo "$(analysesDirectoryPath)/$$(scripts/get-repository-path.sh "{repoUrl}")/$(linesOfCodeReportFileName)"' "$(repoUrls)")
+linesOfCodeReportFileName:=lines-of-code-report-$(to)-$(shell echo "$(clocParameters)" | md5sum | cut -d ' ' -f1).csv
+repositoryLinesOfCodeReportFilePaths:=$(shell cut -d',' -f5 "$(repositoryTableFilePath)" | sed -E 's@(.+)@$(analysesDirectoryPath)/\1/$(linesOfCodeReportFileName)@')
 
 analysisDirectoryPath=$(analysesDirectoryPath)/$(analysisId)
 fileChangesLogFilePath=$(analysisDirectoryPath)/$(fileChangesLogFileName)
