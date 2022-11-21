@@ -43,10 +43,10 @@ analysesDirectoryPath:=$(dataDirectoryPath)/analyses
 fileChangesLogFileName:=file-changes-$(from)-$(to).log
 repositoryFileChangesLogFilePaths:=$(shell cut -d',' -f5 "$(repositoryTableFilePath)" | sed -E 's@(.+)@$(analysesDirectoryPath)/\1/$(fileChangesLogFileName)@')
 
-ifeq ($(crossRepositoryGrouping), true)
-clocParameters=$(langs)::::
-else
-clocParameters=$(langs)::::$(groups)
+clocParameters:=$(langs)::::
+
+ifneq ($(crossRepositoryGrouping), true)
+clocParameters:=$(clocParameters)$(groups)
 endif
 
 linesOfCodeReportFileName=lines-of-code-report-$(to)-$(shell echo "$(clocParameters)" | md5sum | cut -d ' ' -f1).csv
