@@ -40,8 +40,8 @@ repositoryDirectoryPaths:=$(shell cut -d',' -f5 "$(repositoryTableFilePath)" | s
 analysisId:=$(shell { cat "$(repositoryTableFilePath)"; echo "$(groups)"; } | md5sum | cut -d ' ' -f1 )
 analysesDirectoryPath:=$(dataDirectoryPath)/analyses
 
-fileChangesLogFileName=file-changes-$(from)-$(to).log
-repositoryFileChangesLogFilePaths=$(shell scripts/foreach-repository-url.sh 'echo "$(analysesDirectoryPath)/$$(scripts/get-repository-path.sh "{repoUrl}")/$(fileChangesLogFileName)"' "$(repoUrls)")
+fileChangesLogFileName:=file-changes-$(from)-$(to).log
+repositoryFileChangesLogFilePaths:=$(shell cut -d',' -f5 "$(repositoryTableFilePath)" | sed -E 's@(.+)@$(analysesDirectoryPath)/\1/$(fileChangesLogFileName)@')
 
 ifeq ($(crossRepositoryGrouping), true)
 clocParameters=$(langs)::::
