@@ -13,12 +13,14 @@ ifeq ($(or $(repoUrls),$(repoUrlsFile)),)
 $(error Neither repoUrls nor repoUrlsFile provided. Aborting)
 endif
 
-ifeq ($(groupByRepo), true)
-override groups=$(shell scripts/foreach-repository-url.sh 'echo "$$(scripts/get-repository-path.sh "{repoUrl}") => $$(scripts/get-repository-path-prefix.sh "{repoUrl}")$$(scripts/get-repository-name.sh "{repoUrl}" "$(fullyQualifiedRepoNames)");"' "$(repoUrls)")
-endif
-
 ifdef repoUrlsFile
 override repoUrls:=$(shell grep -v '^\#' "$(repoUrlsFile)" | tr '\n' ';')
+endif
+
+repositoryTableFilePath:=$(shell scripts/create-repository-table-file.sh "$(repoUrls)")
+
+ifeq ($(groupByRepo), true)
+override groups:=$(shell scripts/get-group-per-repository.sh "$(repositoryTableFilePath)" "$(fullyQualifiedRepoNames)")
 endif
 
 ifdef repoUrls
