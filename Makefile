@@ -9,6 +9,14 @@ minSharedRevisions=5
 groupByRepo=false
 fullyQualifiedRepoNames=false
 
+ifeq (clean,$(filter clean,$(MAKECMDGOALS)))
+repoUrls="dummy value to pass validation"
+endif
+
+ifeq (clean-all,$(filter clean-all,$(MAKECMDGOALS)))
+repoUrls="dummy value to pass validation"
+endif
+
 ifeq ($(or $(repoUrls),$(repoUrlsFile)),)
 $(error Neither repoUrls nor repoUrlsFile provided. Aborting)
 endif
