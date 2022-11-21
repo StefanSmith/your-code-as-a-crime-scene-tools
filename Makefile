@@ -38,7 +38,7 @@ repositoryUrlsToPathsMappingFile:=$(repositoriesDirectoryPath)/repositoryUrlsToP
 repositoryDirectoryPaths:=$(shell cut -d',' -f5 "$(repositoryTableFilePath)" | sed -E 's@^@$(repositoriesDirectoryPath)/@')
 
 analysisId:=$(shell { cat "$(repositoryTableFilePath)"; echo "$(groups)"; } | md5sum | cut -d ' ' -f1 )
-analysesDirectoryPath=$(dataDirectoryPath)/analyses
+analysesDirectoryPath:=$(dataDirectoryPath)/analyses
 
 fileChangesLogFileName=file-changes-$(from)-$(to).log
 repositoryFileChangesLogFilePaths=$(shell scripts/foreach-repository-url.sh 'echo "$(analysesDirectoryPath)/$$(scripts/get-repository-path.sh "{repoUrl}")/$(fileChangesLogFileName)"' "$(repoUrls)")
