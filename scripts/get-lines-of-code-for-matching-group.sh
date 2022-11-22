@@ -10,4 +10,5 @@ groupsTable="${4}"
 repositoryPath="$(sed -E 's@^'"${analysesDirectoryPath}"'/(.+)/'"${linesOfCodeReportFileRelativePath}"'@\1@' <<< "${linesOfCodeReportFilePath}")"
 matchedGroupName="$(grep -E "^${repositoryPath}," <<< "${groupsTable}" | cut -d ',' -f2 )"
 
+printf '.' >&2
 grep "SUM" "${linesOfCodeReportFilePath}" | sed -r "s|^SUM,,|SUM,${matchedGroupName},|"
