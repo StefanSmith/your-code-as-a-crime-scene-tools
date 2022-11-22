@@ -144,14 +144,14 @@ entity-ownership: $(maatGroupsFilePath) $(fileChangesLogFilePath)
 	$(maatCommand) -a entity-ownership | tee "$(analysisDirectoryPath)/entity-ownership.csv" | less
 
 indentation: validate-file-parameter $(repositoryDirectoryPaths)
-ifneq ($(numberOfRepositories),"1")
+ifneq ($(numberOfRepositories), 1)
 	$(error only one repository can be specified for this operation)
 endif
 	scripts/checkout-repository-on-mainline.sh "$(makefileDirectoryPath)/$(repositoryDirectoryPaths)"
 	python maat-scripts/miner/complexity_analysis.py "$(repositoryDirectoryPaths)/$(file)"
 
 indentation-trend: validate-date-range-parameters validate-file-parameter $(repositoryDirectoryPaths)
-ifneq ($(numberOfRepositories),"1")
+ifneq ($(numberOfRepositories), 1)
 	$(error only one repository can be specified for this operation)
 endif
 	cd "$(repositoryDirectoryPaths)" && python "$(makefileDirectoryPath)/maat-scripts/miner/git_complexity_trend.py" --start $(shell git -C "$(repositoryDirectoryPaths)" log "$$(scripts/get-repository-mainline-branch-name.sh "$(makefileDirectoryPath)/$(repositoryDirectoryPaths)")" --after=$(from) --pretty=format:%h --reverse | head -1) --end $(shell git -C "$(repositoryDirectoryPaths)" log "$$(scripts/get-repository-mainline-branch-name.sh "$(makefileDirectoryPath)/$(repositoryDirectoryPaths)")" --before=$(to) --pretty=format:%h -1) --file "$(file)" | tee "$(makefileDirectoryPath)/$(analysisDirectoryPath)/indentation-trend.csv" | less
