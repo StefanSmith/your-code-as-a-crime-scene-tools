@@ -72,6 +72,7 @@ hotspotEnclosureDiagramFilePath:=$(analysisDirectoryPath)/hotspot-enclosure-diag
 
 .INTERMEDIATE: $(changeFrequencyReportFilePath) \
 	$(linesOfCodeReportFilePath) \
+	$(fileChangesLogFilePath) \
 	$(mainDevReportFilePath) \
 	$(refactoringMainDevReportFilePath) \
 	$(maatGroupsFilePath)
