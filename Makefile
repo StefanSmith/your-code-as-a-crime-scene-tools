@@ -85,6 +85,10 @@ ifdef groups
 	maatCommand:=$(maatCommand) -g $(maatGroupsFilePath)
 endif
 
+ifdef teamMapFile
+	maatCommand:=$(maatCommand) --team-map-file "$(teamMapFile)"
+endif
+
 default:
 	$(error No target specified)
 

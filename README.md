@@ -124,6 +124,16 @@ groups='com/github/org-1/repo-a => repo-a; com/github/org-2/repo-b => repo-b'
 
 Set to `true` whilst using `groupByRepo=true` to generate groups with fully-qualified repository names. This is useful for avoiding collisions when two repositories have the same name but different URLs. A repository with URL `git@github.com:org-1/repo-a.git` will have a group name of `com.github.org-1.repo-a`.
 
+### `teamMapFile` (optional)
+
+Takes the path to a CSV file that maps commit author names to team names. This enables you to perform various behavioural analyses at the level of teams by attributing a developer's commits to the team they are in. The file should match the following format:
+
+```
+author,team
+Rick Deckard,Blade Runners
+Roy Batty,Replicants
+```
+
 ## Analysis recipes
 
 ### `change-summary`
