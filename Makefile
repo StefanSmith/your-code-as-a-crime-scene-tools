@@ -61,21 +61,13 @@ repositoryLinesOfCodeReportFilePaths:=$(shell cut -d',' -f5 "$(repositoryTableFi
 
 analysisDirectoryPath:=$(analysesDirectoryPath)/$(analysisId)
 fileChangesLogFilePath:=$(analysisDirectoryPath)/$(fileChangesLogFileName)
-
-intermediateAnalysisDirectoryPath:=$(analysisDirectoryPath)/intermediate
-linesOfCodeReportFilePath:=$(intermediateAnalysisDirectoryPath)/lines-of-code-report.csv
-changeFrequencyReportFilePath:=$(intermediateAnalysisDirectoryPath)/change-frequency-report.csv
-mainDevReportFilePath:=$(intermediateAnalysisDirectoryPath)/main-dev.csv
-refactoringMainDevReportFilePath:=$(intermediateAnalysisDirectoryPath)/refactoring-main-dev.csv
-maatGroupsFilePath:=$(intermediateAnalysisDirectoryPath)/maat-groups.txt
+authorsFilePath:=$(analysisDirectoryPath)/$(authorsFileName)
+linesOfCodeReportFilePath:=$(analysisDirectoryPath)/lines-of-code-report.csv
+changeFrequencyReportFilePath:=$(analysisDirectoryPath)/change-frequency-report.csv
+mainDevReportFilePath:=$(analysisDirectoryPath)/main-dev.csv
+refactoringMainDevReportFilePath:=$(analysisDirectoryPath)/refactoring-main-dev.csv
+maatGroupsFilePath:=$(analysisDirectoryPath)/maat-groups.txt
 hotspotEnclosureDiagramFilePath:=$(analysisDirectoryPath)/hotspot-enclosure-diagram.html
-
-.INTERMEDIATE: $(changeFrequencyReportFilePath) \
-	$(linesOfCodeReportFilePath) \
-	$(fileChangesLogFilePath) \
-	$(mainDevReportFilePath) \
-	$(refactoringMainDevReportFilePath) \
-	$(maatGroupsFilePath)
 
 makefileDirectoryPath := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
@@ -199,10 +191,8 @@ endif
 	scripts/cloc.sh "$(repositoriesDirectoryPath)/$*" "$(clocParameters)" > "$@"
 
 $(maatGroupsFilePath):
-ifdef groups
 	mkdir -p "$(@D)"
 	sed 's/; */\n/g' <<< '$(groups)' > "$@"
-endif
 
 $(fileChangesLogFilePath): $(repositoryFileChangesLogFilePaths) | validate-date-range-parameters
 	mkdir -p "$(@D)"
