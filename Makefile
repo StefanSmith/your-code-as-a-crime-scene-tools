@@ -1,6 +1,6 @@
 .DELETE_ON_ERROR:
 
-.PHONEY: clean clean-analyses validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend fetch-source
+.PHONEY: clean clean-analyses validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend fetch-source list-of-authors
 
 port=9000
 minRevisions=5
@@ -49,6 +49,9 @@ analysesDirectoryPath:=$(dataDirectoryPath)/analyses
 
 fileChangesLogFileName:=file-changes-$(from)-$(to).log
 repositoryFileChangesLogFilePaths:=$(shell cut -d',' -f5 "$(repositoryTableFilePath)" | sed -E 's@(.+)@$(analysesDirectoryPath)/\1/$(fileChangesLogFileName)@')
+
+authorsFileName:=authors-$(from)-$(to).log
+repositoryAuthorsFilePaths:=$(shell cut -d',' -f5 "$(repositoryTableFilePath)" | sed -E 's@(.+)@$(analysesDirectoryPath)/\1/$(authorsFileName)@')
 
 clocParameters:=$(langs)::::
 
@@ -105,6 +108,9 @@ ifndef file
 endif
 
 fetch-source: $(repositoryDirectoryPaths)
+
+list-of-authors: $(authorsFilePath)
+	cat $(authorsFilePath) | tee "$(analysisDirectoryPath)/list-of-authors.csv" | less
 
 change-summary: $(fileChangesLogFilePath)
 ifdef groups
@@ -201,6 +207,14 @@ $(fileChangesLogFilePath): $(repositoryFileChangesLogFilePaths) | validate-date-
 $(repositoryFileChangesLogFilePaths): $(analysesDirectoryPath)/%/$(fileChangesLogFileName): | validate-date-range-parameters $(repositoriesDirectoryPath)/%
 	mkdir -p "$(@D)"
 	git -C "$(repositoriesDirectoryPath)/$*" log "$$(scripts/get-repository-mainline-branch-name.sh "$(makefileDirectoryPath)/$(repositoriesDirectoryPath)/$*")" --numstat --date=short --pretty=format:'--%h--%ad--%aN' --no-renames --after="$(from)" --before=="$(to)" > "$@"
+
+$(authorsFilePath): $(repositoryAuthorsFilePaths) | validate-date-range-parameters
+	mkdir -p "$(@D)"
+	cat $(repositoryAuthorsFilePaths) | sort --ignore-case | uniq > "$@"
+
+$(repositoryAuthorsFilePaths): $(analysesDirectoryPath)/%/$(authorsFileName): | validate-date-range-parameters $(repositoriesDirectoryPath)/%
+	mkdir -p "$(@D)"
+	git -C "$(repositoriesDirectoryPath)/$*" shortlog -s -e "$$(scripts/get-repository-mainline-branch-name.sh "$(makefileDirectoryPath)/$(repositoriesDirectoryPath)/$*")" --after="$(from)" --before=="$(to)" | cut -f2 | sed -E 's/ <[^>]+>$$//' > "$@"
 
 $(repositoriesDirectoryPath)/%:
 	git clone "$(shell grep ',$*$$' "$(repositoryTableFilePath)" | awk -F ',' '{ print $$1 }')" "$@"

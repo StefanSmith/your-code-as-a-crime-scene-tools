@@ -133,6 +133,7 @@ author,team
 Rick Deckard,Blade Runners
 Roy Batty,Replicants
 ```
+See [`list-of-authors`](#list-of-authors) target for generating a list of developers to map to teams.
 
 ## Analysis recipes
 
@@ -197,6 +198,11 @@ Removed lines is an approximate indication of the most prolific refactorer. This
 Reports the number of lines added and removed by per file, per author.
 
 Useful for investigating who the authors are and whether they have used multiple different aliases that should be merged in the log of file changes.
+
+### `list-of-authors`
+Reports the distinct set of authors who made commits to the specified repositories during the specified time period.
+
+Useful for creating a file to pass to [`teamMapFile`](#teamMapFile).
 
 ## Clearing local data
 
