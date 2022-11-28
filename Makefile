@@ -1,6 +1,6 @@
 .DELETE_ON_ERROR:
 
-.PHONEY: clean clean-analyses validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend fetch-source list-of-authors
+.PHONEY: clean clean-analyses validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend fetch-source list-of-authors non-team-authors
 
 port=9000
 minRevisions=5
@@ -111,6 +111,12 @@ fetch-source: $(repositoryDirectoryPaths)
 
 list-of-authors: $(authorsFilePath)
 	cat $(authorsFilePath) | tee "$(analysisDirectoryPath)/list-of-authors.csv" | less
+
+non-team-authors: $(authorsFilePath)
+ifeq ($(teamMapFile),)
+	$(error teamMapFile not specified. Aborting)
+endif
+	bash -c 'diff <(cat "$(teamMapFile)" | tail +2 | cut -d',' -f1 | sort --ignore-case | uniq) <(cat "$(authorsFilePath)") || echo > /dev/null # Suppress failure' | grep '^>' | cut -d' ' -f2- | less
 
 change-summary: $(fileChangesLogFilePath)
 ifdef groups

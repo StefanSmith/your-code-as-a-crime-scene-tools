@@ -204,6 +204,11 @@ Reports the distinct set of authors who made commits to the specified repositori
 
 Useful for creating a file to pass to [`teamMapFile`](#teamMapFile).
 
+### `non-team-authors`
+Reports the authors missing from a team map file (specified by the mandatory `teamMapFile` parameter) who made commits to the specified repositories during the specified time period.
+
+Useful for progressively adding authors to a team map file. See [`teamMapFile`](#teamMapFile) for how this file can be used to perform analyses at a team level.
+
 ## Clearing local data
 
 File change history and lines of code counts are cached between executions. Results are also written to disk.
