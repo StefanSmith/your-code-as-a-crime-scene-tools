@@ -202,12 +202,12 @@ Useful for investigating who the authors are and whether they have used multiple
 ### `list-of-authors`
 Reports the distinct set of authors who made commits to the specified repositories during the specified time period.
 
-Useful for creating a file to pass to [`teamMapFile`](#teamMapFile).
+Useful for creating a file to pass to [`teamMapFile`](#teammapfile-optional).
 
 ### `non-team-authors`
 Reports the authors missing from a team map file (specified by the mandatory `teamMapFile` parameter) who made commits to the specified repositories during the specified time period.
 
-Useful for progressively adding authors to a team map file. See [`teamMapFile`](#teamMapFile) for how this file can be used to perform analyses at a team level.
+Useful for progressively adding authors to a team map file. See [`teamMapFile`](#teammapfile-optional) for how this file can be used to perform analyses at a team level.
 
 ## Clearing local data
 
