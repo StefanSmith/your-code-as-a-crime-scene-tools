@@ -154,10 +154,13 @@ Prints a table of code files, sorted by change frequency. Each row includes the 
 As with the [hotspots](#hotspots) recipe, you must specify the `langs` parameter.
 
 ### `knowledge-map`
-Opens an interactive "circle packing" diagram showing code files coloured by main contributing author during the time frame. The larger the circle, the more lines of code (a rough proxy for complexity). The author colours must be specified in a file past to the `authorColorsFile` parameter. The file must have the following format:
+Opens an interactive "circle packing" diagram showing code files coloured by main contributing author during the time frame. The larger the circle, the more lines of code (a rough proxy for complexity). The author colours must be specified in either the `authorColors` parameter or in a file passed to the `authorColorsFile` parameter.
+
+The `authorColors` parameters takes a semicolon-separated list using the following format: `Rick Deckard,Blue; Roy Batty,Green`
+
+The file passed to the `authorColorsFile` parameter must use the following format:
 
 ```
-author,color
 Rick Deckard,Blue
 Roy Batty,Green
 ```

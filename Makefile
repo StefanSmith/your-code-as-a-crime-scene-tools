@@ -72,6 +72,7 @@ refactoringMainDevReportFilePath:=$(analysisDirectoryPath)/refactoring-main-dev.
 maatGroupsFilePath:=$(analysisDirectoryPath)/maat-groups.txt
 hotspotEnclosureDiagramFilePath:=$(analysisDirectoryPath)/hotspot-enclosure-diagram.html
 knowledgeMapDiagramFilePath:=$(analysisDirectoryPath)/knowledge-map-diagram.html
+authorColorsFilePath:=$(analysisDirectoryPath)/author-colors.csv
 
 makefileDirectoryPath := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
@@ -169,9 +170,17 @@ ifneq ($(numberOfRepositories), 1)
 endif
 	cd "$(repositoryDirectoryPaths)" && python "$(makefileDirectoryPath)/maat-scripts/miner/git_complexity_trend.py" --start $(shell git -C "$(repositoryDirectoryPaths)" log "$$(scripts/get-repository-mainline-branch-name.sh "$(makefileDirectoryPath)/$(repositoryDirectoryPaths)")" --after=$(from) --pretty=format:%h --reverse | head -1) --end $(shell git -C "$(repositoryDirectoryPaths)" log "$$(scripts/get-repository-mainline-branch-name.sh "$(makefileDirectoryPath)/$(repositoryDirectoryPaths)")" --before=$(to) --pretty=format:%h -1) --file "$(file)" | tee "$(makefileDirectoryPath)/$(analysisDirectoryPath)/indentation-trend.csv" | less
 
-$(knowledgeMapDiagramFilePath): $(mainDevReportFilePath) $(linesOfCodeReportFilePath)
+$(knowledgeMapDiagramFilePath): $(mainDevReportFilePath) $(linesOfCodeReportFilePath) $(authorColorsFilePath)
 	mkdir -p "$(@D)"
-	scripts/generate-knowledge-map-diagram.sh "$(linesOfCodeReportFilePath)" "$(mainDevReportFilePath)" "$(authorColorsFile)" > "$@"
+	scripts/generate-knowledge-map-diagram.sh "$(linesOfCodeReportFilePath)" "$(mainDevReportFilePath)" "$(authorColorsFilePath)" > "$@"
+
+$(authorColorsFilePath):
+ifeq ($(or $(authorColors),$(authorColorsFile)),)
+	$(error Neither authorColors nor authorColorsFile provided. Aborting)
+endif
+	mkdir -p "$(@D)"
+	echo 'author,color' > "$@"
+	if [ -n "$(authorColorsFile)" ]; then grep -v '^\#' "$(authorColorsFile)"; else tr ';' '\n' <<< "${authorColors}"; fi | sed -E 's/^ +| ?(,) ?| +$$/\1/g' | grep -v "^$$" | sort | uniq >> "$@"
 
 $(mainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
 	mkdir -p "$(@D)"
