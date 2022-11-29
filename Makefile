@@ -44,7 +44,9 @@ dataDirectoryPath=data
 repositoriesDirectoryPath:=$(dataDirectoryPath)/repositories
 repositoryDirectoryPaths:=$(shell cut -d',' -f5 "$(repositoryTableFilePath)" | sed -E 's@^@$(repositoriesDirectoryPath)/@')
 
-analysisId:=$(shell { cat "$(repositoryTableFilePath)"; echo "$(MAKEOVERRIDES)"; } | md5sum | cut -d ' ' -f1 )
+parametersForAnalysisId:=$(shell echo "$(MAKEOVERRIDES)" | sed -E 's/authorColors(File)?=([^ ]|\\ )+ ?//' | sed 's/ *$$//')
+analysisId:=$(shell { cat "$(repositoryTableFilePath)"; echo "$(parametersForAnalysisId)"; } | md5sum | cut -d ' ' -f1 )
+knowledgeMapId:=$(shell echo "$(authorColorsFile)$(authorColors)" | md5sum | cut -d ' ' -f1 )
 analysesDirectoryPath:=$(dataDirectoryPath)/analyses
 
 fileChangesLogFileName:=file-changes-$(from)-$(to).log
@@ -71,13 +73,14 @@ mainDevReportFilePath:=$(analysisDirectoryPath)/main-dev.csv
 refactoringMainDevReportFilePath:=$(analysisDirectoryPath)/refactoring-main-dev.csv
 maatGroupsFilePath:=$(analysisDirectoryPath)/maat-groups.txt
 hotspotEnclosureDiagramFilePath:=$(analysisDirectoryPath)/hotspot-enclosure-diagram.html
-knowledgeMapDiagramFilePath:=$(analysisDirectoryPath)/knowledge-map-diagram.html
+knowledgeMapDiagramDirectoryPath:=$(analysisDirectoryPath)/$(knowledgeMapId)
+knowledgeMapDiagramFilePath:=$(knowledgeMapDiagramDirectoryPath)/knowledge-map-diagram.html
 
 ifdef authorColorsFile
 authorColorsFilePath:=$(authorColorsFile)
 else
 generateAuthorColorsFile:=true
-authorColorsFilePath:=$(analysisDirectoryPath)/author-colors.csv
+authorColorsFilePath:=$(knowledgeMapDiagramDirectoryPath)/author-colors.csv
 endif
 
 makefileDirectoryPath := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
