@@ -19,7 +19,11 @@ filteredAuthorColours=$(grep -E "${grepPattern}" "${authorColoursAbsoluteFilePat
 cat "${scriptDirectoryPath}/../enclosure-diagram/enclosure-diagram-header.html"
 echo "<script>var root=${enclosureDiagramData};</script>"
 echo "<table><tbody>"
-awk -F',' '{ print "<tr><td style=\"background-color:" $2 "\" class=\"authorColorCell\"></td><td>"$1"</td></tr>" }' <<< "${filteredAuthorColours}"
+
+if [ -n "${filteredAuthorColours}" ]; then
+  awk -F',' '{ print "<tr><td style=\"background-color:" $2 "\" class=\"authorColorCell\"></td><td>"$1"</td></tr>" }' <<< "${filteredAuthorColours}"
+fi
+
 echo "<tr><td style=\"background-color:Black\" class=\"authorColorCell\"></td><td>Unknown</td></tr>"
 echo "</tbody></table>"
 cat "${scriptDirectoryPath}/../enclosure-diagram/knowledge-map-diagram-footer.html"
