@@ -13,5 +13,5 @@ linesOfCodeReportFilePaths="$(echo "${linesOfCodeReportFilePathsString}" | tr ' 
 if [ "$(echo "${linesOfCodeReportFilePaths}" | wc -l)" -eq 1 ]; then
   cat "${linesOfCodeReportFilePaths}"
 else
-  printf "language,filename,blank,comment,code,\n%s" "$(echo "${linesOfCodeReportFilePaths}" | xargs -I {}  -S 2048 "${scriptDirectoryPath}/prefix-lines-of-code-report-with-repo.sh" "{}" "${analysesDirectoryPath}" "${linesOfCodeReportFileRelativePath}" | grep -v "^language,filename,blank,comment,code,")"
+  printf "language,filename,blank,comment,code,\n%s" "$(echo "${linesOfCodeReportFilePaths}" | xargs -I {}  -S 2048 "${scriptDirectoryPath}/prefix-lines-of-code-report-with-repo.sh" "{}" "${analysesDirectoryPath}" "${linesOfCodeReportFileRelativePath}" | grep -v -e "^language,filename,blank,comment,code," -e "^SUM")"
 fi
