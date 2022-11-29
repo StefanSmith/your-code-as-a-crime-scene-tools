@@ -24,6 +24,6 @@ if [ -n "${filteredAuthorColours}" ]; then
   awk -F',' '{ print "<tr><td style=\"background-color:" $2 "\" class=\"authorColorCell\"></td><td>"$1"</td></tr>" }' <<< "${filteredAuthorColours}"
 fi
 
-echo "<tr><td style=\"background-color:Black\" class=\"authorColorCell\"></td><td>Unknown</td></tr>"
+echo "<tr><td style=\"background-color:Black\" class=\"authorColorCell\"></td><td>Other</td></tr>"
 echo "</tbody></table>"
 cat "${scriptDirectoryPath}/../enclosure-diagram/knowledge-map-diagram-footer.html"
