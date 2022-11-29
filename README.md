@@ -153,6 +153,19 @@ Prints a table of code files, sorted by change frequency. Each row includes the 
 
 As with the [hotspots](#hotspots) recipe, you must specify the `langs` parameter.
 
+### `knowledge-map`
+Opens an interactive "circle packing" diagram showing code files coloured by main contributing author during the time frame. The larger the circle, the more lines of code (a rough proxy for complexity). The author colours must be specified in a file past to the `authorColorsFile` parameter. The file must have the following format:
+
+```
+author,color
+Rick Deckard,Blue
+Roy Batty,Green
+```
+
+If you want to perform this analysis at the level of teams, rather than developers, you can specify a [`teamMapFile`](#teammapfile-optional). Ensure your author colors file maps teams, rather than developers.
+
+You must set the `langs` parameter to a comma-separated list of programming languages that you would like `cloc` to count. For example, `langs=JavaScript,TypeScript'`. Valid values can be listed by running `cloc --show-lang`.
+
 ### `indentation`
 Indicates the code complexity of a file (specified by the mandatory `file` parameter) by reporting the `total`, `mean`, `standard deviation` and `maximum` number of indentations (tab or 4 spaces) for the file.
 

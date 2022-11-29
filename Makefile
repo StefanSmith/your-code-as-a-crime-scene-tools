@@ -1,6 +1,6 @@
 .DELETE_ON_ERROR:
 
-.PHONEY: clean clean-analyses validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend fetch-source list-of-authors non-team-authors
+.PHONEY: clean clean-analyses validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend fetch-source list-of-authors non-team-authors knowledge-map
 
 port=9000
 minRevisions=5
@@ -71,6 +71,7 @@ mainDevReportFilePath:=$(analysisDirectoryPath)/main-dev.csv
 refactoringMainDevReportFilePath:=$(analysisDirectoryPath)/refactoring-main-dev.csv
 maatGroupsFilePath:=$(analysisDirectoryPath)/maat-groups.txt
 hotspotEnclosureDiagramFilePath:=$(analysisDirectoryPath)/hotspot-enclosure-diagram.html
+knowledgeMapDiagramFilePath:=$(analysisDirectoryPath)/knowledge-map-diagram.html
 
 makefileDirectoryPath := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
@@ -130,6 +131,9 @@ hotspots: $(hotspotEnclosureDiagramFilePath)
 hotspots-table: $(changeFrequencyReportFilePath) $(linesOfCodeReportFilePath)
 	python maat-scripts/merge/merge_comp_freqs.py "$(changeFrequencyReportFilePath)" "$(linesOfCodeReportFilePath)" | tee "$(analysisDirectoryPath)/hotspots.csv" | less
 
+knowledge-map: $(knowledgeMapDiagramFilePath)
+	open "$(makefileDirectoryPath)/$(knowledgeMapDiagramFilePath)"
+
 change-frequency: $(changeFrequencyReportFilePath)
 	less "$(changeFrequencyReportFilePath)"
 
@@ -164,6 +168,10 @@ ifneq ($(numberOfRepositories), 1)
 	$(error only one repository can be specified for this operation)
 endif
 	cd "$(repositoryDirectoryPaths)" && python "$(makefileDirectoryPath)/maat-scripts/miner/git_complexity_trend.py" --start $(shell git -C "$(repositoryDirectoryPaths)" log "$$(scripts/get-repository-mainline-branch-name.sh "$(makefileDirectoryPath)/$(repositoryDirectoryPaths)")" --after=$(from) --pretty=format:%h --reverse | head -1) --end $(shell git -C "$(repositoryDirectoryPaths)" log "$$(scripts/get-repository-mainline-branch-name.sh "$(makefileDirectoryPath)/$(repositoryDirectoryPaths)")" --before=$(to) --pretty=format:%h -1) --file "$(file)" | tee "$(makefileDirectoryPath)/$(analysisDirectoryPath)/indentation-trend.csv" | less
+
+$(knowledgeMapDiagramFilePath): $(mainDevReportFilePath) $(linesOfCodeReportFilePath)
+	mkdir -p "$(@D)"
+	scripts/generate-knowledge-map-diagram.sh "$(linesOfCodeReportFilePath)" "$(mainDevReportFilePath)" "$(authorColorsFile)" > "$@"
 
 $(mainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
 	mkdir -p "$(@D)"

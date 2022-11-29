@@ -11,4 +11,4 @@ enclosureDiagramData="$(python "${scriptDirectoryPath}/../maat-scripts/transform
 
 cat "${scriptDirectoryPath}/../enclosure-diagram/enclosure-diagram-header.html"
 echo "<script>var root=${enclosureDiagramData};</script>"
-cat "${scriptDirectoryPath}/../enclosure-diagram/enclosure-diagram-footer.html"
+cat "${scriptDirectoryPath}/../enclosure-diagram/hotspot-enclosure-diagram-footer.html"
