@@ -136,12 +136,6 @@ ifdef groups
 endif
 	$(maatCommand) -a summary | tee "$(analysisDirectoryPath)/change-summary.csv" | less
 
-fragmentation: $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
-	$(maatCommand) -a fragmentation | less
-
-communication: $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
-	$(maatCommand) -a communication | less
-
 hotspots: $(hotspotEnclosureDiagramFilePath)
 	open "$(makefileDirectoryPath)/$(hotspotEnclosureDiagramFilePath)"
 
