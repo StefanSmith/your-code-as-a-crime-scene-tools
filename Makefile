@@ -72,7 +72,13 @@ refactoringMainDevReportFilePath:=$(analysisDirectoryPath)/refactoring-main-dev.
 maatGroupsFilePath:=$(analysisDirectoryPath)/maat-groups.txt
 hotspotEnclosureDiagramFilePath:=$(analysisDirectoryPath)/hotspot-enclosure-diagram.html
 knowledgeMapDiagramFilePath:=$(analysisDirectoryPath)/knowledge-map-diagram.html
+
+ifdef authorColorsFile
+authorColorsFilePath:=$(authorColorsFile)
+else
+generateAuthorColorsFile:=true
 authorColorsFilePath:=$(analysisDirectoryPath)/author-colors.csv
+endif
 
 makefileDirectoryPath := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
@@ -175,12 +181,14 @@ $(knowledgeMapDiagramFilePath): $(mainDevReportFilePath) $(linesOfCodeReportFile
 	scripts/generate-knowledge-map-diagram.sh "$(linesOfCodeReportFilePath)" "$(mainDevReportFilePath)" "$(authorColorsFilePath)" > "$@"
 
 $(authorColorsFilePath):
-ifeq ($(or $(authorColors),$(authorColorsFile)),)
-	$(error Neither authorColors nor authorColorsFile provided. Aborting)
+ifeq ($(generateAuthorColorsFile),true)
+ifeq ($(authorColors),)
+	$(error Cannot generate author colors file unless authorColors parameter is provided. Aborting)
 endif
 	mkdir -p "$(@D)"
 	echo 'author,color' > "$@"
-	if [ -n "$(authorColorsFile)" ]; then grep -v '^\#' "$(authorColorsFile)"; else tr ';' '\n' <<< "${authorColors}"; fi | sed -E 's/^ +| ?(,) ?| +$$/\1/g' | grep -v "^$$" | sort | uniq >> "$@"
+	tr ';' '\n' <<< "${authorColors}" | sed -E 's/^ +| ?(,) ?| +$$/\1/g' | grep -v "^$$" | sort | uniq >> "$@"
+endif
 
 $(mainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath)
 	mkdir -p "$(@D)"

@@ -161,6 +161,7 @@ The `authorColors` parameters takes a semicolon-separated list using the followi
 The file passed to the `authorColorsFile` parameter must use the following format:
 
 ```
+author,color
 Rick Deckard,Blue
 Roy Batty,Green
 ```
