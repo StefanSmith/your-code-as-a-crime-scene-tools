@@ -11,7 +11,7 @@ scriptDirectoryPath=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null 
 linesOfCodeReportFilePaths="$(echo "${linesOfCodeReportFilePathsString}" | tr ' ' '\n')"
 
 if [ "$(echo "${linesOfCodeReportFilePaths}" | wc -l)" -eq 1 ]; then
-  cat "${linesOfCodeReportFilePaths}"
+  grep -v "^SUM" "${linesOfCodeReportFilePaths}"
 else
   printf "language,filename,blank,comment,code,\n%s" "$(echo "${linesOfCodeReportFilePaths}" | xargs -I {}  -S 2048 "${scriptDirectoryPath}/prefix-lines-of-code-report-with-repo.sh" "{}" "${analysesDirectoryPath}" "${linesOfCodeReportFileRelativePath}" | grep -v -e "^language,filename,blank,comment,code," -e "^SUM")"
 fi
