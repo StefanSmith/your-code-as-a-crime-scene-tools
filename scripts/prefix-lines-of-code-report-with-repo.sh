@@ -10,6 +10,6 @@ repositoryPath="$(sed -E 's@^'"${analysesDirectoryPath}"'/(.+)/'"${linesOfCodeRe
 
 echo "Prefixing lines of code report file paths with ${repositoryPath}..." >&2
 
-linesOfCodeReportWithPrefix="$(sed -r 's@^([^,]+,)\.@\1'"${repositoryPath}"'@' "${linesOfCodeReportFilePath}")"
+linesOfCodeReportWithPrefix="$(sed -r 's@^([^,]+,)\.@\1'"./${repositoryPath}"'@' "${linesOfCodeReportFilePath}")"
 
 echo "${linesOfCodeReportWithPrefix}" | grep -v '^$'
