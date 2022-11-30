@@ -217,7 +217,7 @@ $(refactoringMainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFileP
 
 $(hotspotEnclosureDiagramFilePath): $(changeFrequencyReportFilePath) $(linesOfCodeReportFilePath)
 	mkdir -p "$(@D)"
-	scripts/generate-hotspot-enclosure-diagram.sh "$(linesOfCodeReportFilePath)" "$(changeFrequencyReportFilePath)" > "$@"
+	scripts/generate-heatmap-enclosure-diagram.sh "$(linesOfCodeReportFilePath)" "$(changeFrequencyReportFilePath)" > "$@"
 
 $(changeFrequencyReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
 	mkdir -p "$(@D)"
