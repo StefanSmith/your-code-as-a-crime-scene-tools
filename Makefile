@@ -1,6 +1,6 @@
 .DELETE_ON_ERROR:
 
-.PHONEY: clean clean-analyses validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend fetch-source list-of-authors non-team-authors knowledge-map main-dev-entities
+.PHONEY: clean clean-analyses validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend fetch-source list-of-authors non-team-authors knowledge-map main-dev-entities fragmentation fragmentation-table
 
 port=9000
 minRevisions=5
@@ -74,6 +74,8 @@ mainDevReportFilePath:=$(analysisDirectoryPath)/main-dev.csv
 refactoringMainDevReportFilePath:=$(analysisDirectoryPath)/refactoring-main-dev.csv
 maatGroupsFilePath:=$(analysisDirectoryPath)/maat-groups.txt
 hotspotEnclosureDiagramFilePath:=$(analysisDirectoryPath)/hotspot-enclosure-diagram.html
+fragmentationEnclosureDiagramFilePath:=$(analysisDirectoryPath)/fragmentation-enclosure-diagram.html
+fragmentationReportFilePath:=$(analysisDirectoryPath)/fragmentation-report.csv
 knowledgeMapDiagramDirectoryPath:=$(analysisDirectoryPath)/$(knowledgeMapId)
 knowledgeMapDiagramFilePath:=$(knowledgeMapDiagramDirectoryPath)/knowledge-map-diagram.html
 
@@ -139,6 +141,12 @@ ifdef groups
 	$(error change summary report does not support grouping)
 endif
 	$(maatCommand) -a summary | tee "$(analysisDirectoryPath)/change-summary.csv" | less
+
+fragmentation: $(fragmentationEnclosureDiagramFilePath)
+	open "$(makefileDirectoryPath)/$(fragmentationEnclosureDiagramFilePath)"
+
+fragmentation-table: $(fragmentationReportFilePath)
+	less $(fragmentationReportFilePath)
 
 hotspots: $(hotspotEnclosureDiagramFilePath)
 	open "$(makefileDirectoryPath)/$(hotspotEnclosureDiagramFilePath)"
@@ -214,6 +222,14 @@ $(mainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(team
 $(refactoringMainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
 	mkdir -p "$(@D)"
 	$(maatCommand) -a refactoring-main-dev > "$@"
+
+$(fragmentationEnclosureDiagramFilePath): $(fragmentationReportFilePath) $(linesOfCodeReportFilePath)
+	mkdir -p "$(@D)"
+	scripts/generate-heatmap-enclosure-diagram.sh "$(linesOfCodeReportFilePath)" "$(fragmentationReportFilePath)" > "$@"
+
+$(fragmentationReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
+	mkdir -p "$(@D)"
+	$(maatCommand) -a fragmentation > "$@"
 
 $(hotspotEnclosureDiagramFilePath): $(changeFrequencyReportFilePath) $(linesOfCodeReportFilePath)
 	mkdir -p "$(@D)"
