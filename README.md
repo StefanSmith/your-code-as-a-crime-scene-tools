@@ -198,6 +198,9 @@ The higher the average number of commits, the more we can rely on the reported %
 
 By default, coupling analysis only considers changes within the same commit. For cross-repository analysis, you can instead consider changes within a given time frame (in days). Specify a number of days using the optional `couplingDays` parameter.
 
+### `file-changes`
+Print list of revisions, and the file changes they contain, for the specified repositories.
+
 ### `authors`
 For each file, prints the number of unique authors.
 
