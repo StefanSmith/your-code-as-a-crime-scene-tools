@@ -1,6 +1,6 @@
 .DELETE_ON_ERROR:
 
-.PHONEY: clean clean-analyses validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend fetch-source list-of-authors non-team-authors knowledge-map
+.PHONEY: clean clean-analyses validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend fetch-source list-of-authors non-team-authors knowledge-map main-dev-entities
 
 port=9000
 minRevisions=5
@@ -44,7 +44,7 @@ dataDirectoryPath=data
 repositoriesDirectoryPath:=$(dataDirectoryPath)/repositories
 repositoryDirectoryPaths:=$(shell cut -d',' -f5 "$(repositoryTableFilePath)" | sed -E 's@^@$(repositoriesDirectoryPath)/@')
 
-parametersForAnalysisId:=$(shell echo "$(MAKEOVERRIDES)" | sed -E 's/authorColors(File)?=([^ ]|\\ )+ ?//' | sed 's/ *$$//')
+parametersForAnalysisId:=$(shell echo "$(MAKEOVERRIDES)" | sed -E 's/(authorColors(File)?|mainDev)=([^ ]|\\ )+ ?//' | sed 's/ *$$//')
 analysisId:=$(shell { cat "$(repositoryTableFilePath)"; echo "$(parametersForAnalysisId)"; } | md5sum | cut -d ' ' -f1 )
 knowledgeMapId:=$(shell echo "$(authorColorsFile)$(authorColors)" | md5sum | cut -d ' ' -f1 )
 analysesDirectoryPath:=$(dataDirectoryPath)/analyses
@@ -69,6 +69,7 @@ fileChangesLogFilePath:=$(analysisDirectoryPath)/$(fileChangesLogFileName)
 authorsFilePath:=$(analysisDirectoryPath)/$(authorsFileName)
 linesOfCodeReportFilePath:=$(analysisDirectoryPath)/lines-of-code-report.csv
 changeFrequencyReportFilePath:=$(analysisDirectoryPath)/change-frequency-report.csv
+mainDevsReportFilePath:=$(analysisDirectoryPath)/main-devs.csv
 mainDevReportFilePath:=$(analysisDirectoryPath)/main-dev.csv
 refactoringMainDevReportFilePath:=$(analysisDirectoryPath)/refactoring-main-dev.csv
 maatGroupsFilePath:=$(analysisDirectoryPath)/maat-groups.txt
@@ -164,7 +165,16 @@ coupling: $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
 authors: $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
 	$(maatCommand) -a authors | tee "$(analysisDirectoryPath)/authors.csv" | less
 
-main-devs: $(mainDevReportFilePath) $(refactoringMainDevReportFilePath)
+main-devs: $(mainDevsReportFilePath)
+	echo "entity,change-type,main-dev,changed,total-changed,ownership\n$$( echo "$$(tail +2 "$(mainDevReportFilePath)" | sed 's/,/,added,/')\n$$(tail +2 "$(refactoringMainDevReportFilePath)" | sed 's/,/,removed,/')" | sort )" | tee $(analysisDirectoryPath)/main-devs.csv | less
+
+main-dev-entities: $(mainDevsReportFilePath)
+ifndef mainDev
+	$(error mainDev not specified. Aborting)
+endif
+	head -1 "$(mainDevsReportFilePath)" && grep ",$(mainDev)," "$(mainDevsReportFilePath)" | sort -n -r -t, -k6  || printf ''
+
+$(mainDevsReportFilePath): $(mainDevReportFilePath) $(refactoringMainDevReportFilePath)
 	echo "entity,change-type,main-dev,changed,total-changed,ownership\n$$( echo "$$(tail +2 "$(mainDevReportFilePath)" | sed 's/,/,added,/')\n$$(tail +2 "$(refactoringMainDevReportFilePath)" | sed 's/,/,removed,/')" | sort )" | tee $(analysisDirectoryPath)/main-devs.csv | less
 
 entity-ownership: $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)

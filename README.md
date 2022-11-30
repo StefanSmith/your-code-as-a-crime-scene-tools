@@ -211,6 +211,9 @@ In both cases, the number of lines added or removed by the author is reported, a
 
 Removed lines is an approximate indication of the most prolific refactorer. This may be a more accurate indicator of the most knowledgeable developer for a given file, since lines added is subject to disruption from developers who practice copy-paste.
 
+### `main-dev-entities`
+Shows the entities (files or groups) for which the specified `mainDev` is the author who has added or removed the most lines. This filters the results from [`main-devs`](#main-devs) and sorts by descending % author contribution.
+
 ### `entity-ownership`
 Reports the number of lines added and removed by per file, per author.
 
