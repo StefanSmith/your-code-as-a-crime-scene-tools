@@ -1,6 +1,6 @@
 .DELETE_ON_ERROR:
 
-.PHONEY: clean clean-analyses validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend fetch-source list-of-authors non-team-authors knowledge-map main-dev-entities fragmentation fragmentation-table
+.PHONEY: clean clean-analyses validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend fetch-source list-of-authors non-team-authors knowledge-map main-dev-entities fragmentation fragmentation-table communication communication-table
 
 port=9000
 minRevisions=5
@@ -76,6 +76,8 @@ maatGroupsFilePath:=$(analysisDirectoryPath)/maat-groups.txt
 hotspotEnclosureDiagramFilePath:=$(analysisDirectoryPath)/hotspot-enclosure-diagram.html
 fragmentationEnclosureDiagramFilePath:=$(analysisDirectoryPath)/fragmentation-enclosure-diagram.html
 fragmentationReportFilePath:=$(analysisDirectoryPath)/fragmentation-report.csv
+communicationDiagramFilePath:=$(analysisDirectoryPath)/communication-diagram.html
+communicationReportFilePath:=$(analysisDirectoryPath)/communication-report.csv
 knowledgeMapDiagramDirectoryPath:=$(analysisDirectoryPath)/$(knowledgeMapId)
 knowledgeMapDiagramFilePath:=$(knowledgeMapDiagramDirectoryPath)/knowledge-map-diagram.html
 
@@ -146,7 +148,13 @@ fragmentation: $(fragmentationEnclosureDiagramFilePath)
 	open "$(makefileDirectoryPath)/$(fragmentationEnclosureDiagramFilePath)"
 
 fragmentation-table: $(fragmentationReportFilePath)
-	less $(fragmentationReportFilePath)
+	less "$(fragmentationReportFilePath)"
+
+communication: $(communicationDiagramFilePath)
+	open "$(makefileDirectoryPath)/$(communicationDiagramFilePath)"
+
+communication-table: $(communicationReportFilePath)
+	less "$(communicationReportFilePath)"
 
 hotspots: $(hotspotEnclosureDiagramFilePath)
 	open "$(makefileDirectoryPath)/$(hotspotEnclosureDiagramFilePath)"
@@ -204,6 +212,14 @@ endif
 $(knowledgeMapDiagramFilePath): $(mainDevReportFilePath) $(linesOfCodeReportFilePath) $(authorColorsFilePath)
 	mkdir -p "$(@D)"
 	scripts/generate-knowledge-map-diagram.sh "$(linesOfCodeReportFilePath)" "$(mainDevReportFilePath)" "$(authorColorsFilePath)" > "$@"
+
+$(communicationDiagramFilePath): $(communicationReportFilePath)
+	mkdir -p "$(@D)"
+	scripts/generate-communication-diagram.sh "$(communicationReportFilePath)" > "$@"
+
+$(communicationReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
+	mkdir -p "$(@D)"
+	$(maatCommand) -a communication > "$@"
 
 $(authorColorsFilePath):
 ifeq ($(generateAuthorColorsFile),true)

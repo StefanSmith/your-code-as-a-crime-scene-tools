@@ -201,6 +201,12 @@ By default, coupling analysis only considers changes within the same commit. For
 ### `authors`
 For each file, prints the number of unique authors.
 
+### `communication`
+Opens an interactive "hierarchical edge bundling" diagram showing the author pairs reported in [communication-table](#communication-table).
+
+### `communication-table`
+For every pairs of authors, report the number of entities (files or groups) they have both changed, the average number of entities they have each changed, and the ratio between the two (as a percentage "strength").
+
 ### `main-devs`
 Prints two lines for each file:
 
