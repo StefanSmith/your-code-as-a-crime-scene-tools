@@ -166,13 +166,13 @@ authors: $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
 	$(maatCommand) -a authors | tee "$(analysisDirectoryPath)/authors.csv" | less
 
 main-devs: $(mainDevsReportFilePath)
-	echo "entity,change-type,main-dev,changed,total-changed,ownership\n$$( echo "$$(tail +2 "$(mainDevReportFilePath)" | sed 's/,/,added,/')\n$$(tail +2 "$(refactoringMainDevReportFilePath)" | sed 's/,/,removed,/')" | sort )" | tee $(analysisDirectoryPath)/main-devs.csv | less
+	cat "$(mainDevsReportFilePath)" | tee $(analysisDirectoryPath)/main-devs.csv | less
 
 main-dev-entities: $(mainDevsReportFilePath)
 ifndef mainDev
 	$(error mainDev not specified. Aborting)
 endif
-	head -1 "$(mainDevsReportFilePath)" && grep ",$(mainDev)," "$(mainDevsReportFilePath)" | sort -n -r -t, -k6  || printf ''
+	echo "$$(head -1 "$(mainDevsReportFilePath)" && grep ",$(mainDev)," "$(mainDevsReportFilePath)" | sort -n -r -t, -k6  || printf '')" | tee $(analysisDirectoryPath)/$(mainDev)-entities.csv | less
 
 $(mainDevsReportFilePath): $(mainDevReportFilePath) $(refactoringMainDevReportFilePath)
 	echo "entity,change-type,main-dev,changed,total-changed,ownership\n$$( echo "$$(tail +2 "$(mainDevReportFilePath)" | sed 's/,/,added,/')\n$$(tail +2 "$(refactoringMainDevReportFilePath)" | sed 's/,/,removed,/')" | sort )" | tee $(analysisDirectoryPath)/main-devs.csv | less
