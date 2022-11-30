@@ -13,6 +13,7 @@ authorColoursAbsoluteFilePath="${scriptDirectoryPath}/../${authorColorsFilePath}
 enclosureDiagramData="$(python "${scriptDirectoryPath}/../maat-scripts/transform/csv_main_dev_as_knowledge_json.py" --structure "${linesOfCodeReportFilePath}" --owners "${mainDevReportFilePath}" --authors "${authorColoursAbsoluteFilePath}")"
 
 uniqueAuthors="$(awk -F',' '{ if (NR!=1) { print $2 } }' "${mainDevReportFilePath}" | sort | uniq)"
+#TODO: escape regex characters in uniqueAuthors
 grepPattern="$(xargs -I {} printf "{}|" <<< "${uniqueAuthors}" | sed -E 's/(.+)\|/^(\1),/')"
 filteredAuthorColours=$(grep -E "${grepPattern}" "${authorColoursAbsoluteFilePath}" || echo)
 
