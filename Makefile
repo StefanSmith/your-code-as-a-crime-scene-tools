@@ -76,6 +76,7 @@ mainDevsReportFilePath:=$(analysisDirectoryPath)/main-devs.csv
 mainDevReportFilePath:=$(analysisDirectoryPath)/main-dev.csv
 refactoringMainDevReportFilePath:=$(analysisDirectoryPath)/refactoring-main-dev.csv
 maatGroupsFilePath:=$(analysisDirectoryPath)/maat-groups.txt
+hotspotsReportFilePath:=$(analysisDirectoryPath)/hotspots.csv
 hotspotEnclosureDiagramFilePath:=$(analysisDirectoryPath)/hotspot-enclosure-diagram.html
 fragmentationEnclosureDiagramFilePath:=$(analysisDirectoryPath)/fragmentation-enclosure-diagram.html
 fragmentationReportFilePath:=$(analysisDirectoryPath)/fragmentation-report.csv
@@ -142,7 +143,7 @@ endif
 	bash -c 'diff <(cat "$(teamMapFile)" | tail +2 | cut -d',' -f1 | sort --ignore-case | uniq) <(cat "$(listOfAuthorsReportFilePath)") || echo > /dev/null # Suppress failure' | grep '^>' | cut -d' ' -f2- | less
 
 change-summary: $(changeSummaryReportFilePath)
-	less $(changeSummaryReportFilePath)
+	less "$(changeSummaryReportFilePath)"
 
 file-changes: $(fileChangesLogFilePath)
 	less "$(fileChangesLogFilePath)"
@@ -162,8 +163,8 @@ communication-table: $(communicationReportFilePath)
 hotspots: $(hotspotEnclosureDiagramFilePath)
 	open "$(makefileDirectoryPath)/$(hotspotEnclosureDiagramFilePath)"
 
-hotspots-table: $(changeFrequencyReportFilePath) $(linesOfCodeReportFilePath)
-	python maat-scripts/merge/merge_comp_freqs.py "$(changeFrequencyReportFilePath)" "$(linesOfCodeReportFilePath)" | tee "$(analysisDirectoryPath)/hotspots.csv" | less
+hotspots-table: $(hotspotsReportFilePath)
+	less "$(hotspotsReportFilePath)"
 
 knowledge-map: $(knowledgeMapDiagramFilePath)
 	open "$(makefileDirectoryPath)/$(knowledgeMapDiagramFilePath)"
@@ -262,6 +263,9 @@ $(fragmentationReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) 
 $(hotspotEnclosureDiagramFilePath): $(changeFrequencyReportFilePath) $(linesOfCodeReportFilePath)
 	mkdir -p "$(@D)"
 	scripts/generate-heatmap-enclosure-diagram.sh "$(linesOfCodeReportFilePath)" "$(changeFrequencyReportFilePath)" > "$@"
+
+$(hotspotsReportFilePath): $(changeFrequencyReportFilePath) $(linesOfCodeReportFilePath)
+	python maat-scripts/merge/merge_comp_freqs.py "$(changeFrequencyReportFilePath)" "$(linesOfCodeReportFilePath)" > "$@"
 
 $(changeFrequencyReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
 	mkdir -p "$(@D)"
