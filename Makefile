@@ -86,6 +86,7 @@ communicationReportFilePath:=$(analysisDirectoryPath)/communication-report.csv
 sumOfCouplingReportFilePath:=$(analysisDirectoryPath)/sum-of-coupling.csv
 couplingReportFilePath:=$(analysisDirectoryPath)/coupling.csv
 authorsReportFilePath:=$(analysisDirectoryPath)/authors.csv
+indentationReportFilePath:=$(analysisDirectoryPath)/indentation.csv
 indentationTrendReportFilePath:=$(analysisDirectoryPath)/indentation-trend.csv
 knowledgeMapDiagramDirectoryPath:=$(analysisDirectoryPath)/$(knowledgeMapId)
 knowledgeMapDiagramFilePath:=$(knowledgeMapDiagramDirectoryPath)/knowledge-map-diagram.html
@@ -202,12 +203,8 @@ entity-ownership: $(entityOwnershipReportFilePath)
 entity-effort: $(entityEffortReportFilePath)
 	less "$(entityEffortReportFilePath)"
 
-indentation: validate-file-parameter $(repositoryDirectoryPaths)
-ifneq ($(numberOfRepositories), 1)
-	$(error only one repository can be specified for this operation)
-endif
-	scripts/checkout-repository-on-mainline.sh "$(makefileDirectoryPath)/$(repositoryDirectoryPaths)"
-	python maat-scripts/miner/complexity_analysis.py "$(repositoryDirectoryPaths)/$(file)"
+indentation: $(indentationReportFilePath)
+	less "$(indentationReportFilePath)"
 
 indentation-trend: $(indentationTrendReportFilePath)
 	less "$(indentationTrendReportFilePath)"
@@ -305,6 +302,14 @@ endif
 
 $(authorsReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
 	$(maatCommand) -a authors > "$@"
+
+$(indentationReportFilePath): $(repositoryDirectoryPaths) | validate-file-parameter
+ifneq ($(numberOfRepositories), 1)
+	$(error only one repository can be specified for this operation)
+endif
+	mkdir -p "$(@D)"
+	scripts/checkout-repository-on-mainline.sh "$(makefileDirectoryPath)/$(repositoryDirectoryPaths)"
+	python maat-scripts/miner/complexity_analysis.py "$(repositoryDirectoryPaths)/$(file)" > "$@"
 
 $(indentationTrendReportFilePath): $(repositoryDirectoryPaths) | validate-date-range-parameters validate-file-parameter
 ifneq ($(numberOfRepositories), 1)
