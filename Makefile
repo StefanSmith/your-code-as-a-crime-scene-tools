@@ -66,7 +66,6 @@ repositoryLinesOfCodeReportFilePaths:=$(shell cut -d',' -f5 "$(repositoryTableFi
 
 analysisDirectoryPath:=$(analysesDirectoryPath)/$(analysisId)
 fileChangesLogFilePath:=$(analysisDirectoryPath)/$(fileChangesLogFileName)
-authorsFilePath:=$(analysisDirectoryPath)/$(authorsFileName)
 listOfAuthorsReportFilePath:=$(analysisDirectoryPath)/list-of-authors.csv
 linesOfCodeReportFilePath:=$(analysisDirectoryPath)/lines-of-code-report.csv
 changeFrequencyReportFilePath:=$(analysisDirectoryPath)/change-frequency-report.csv
@@ -135,11 +134,11 @@ fetch-source: $(repositoryDirectoryPaths)
 list-of-authors: $(listOfAuthorsReportFilePath)
 	less $(listOfAuthorsReportFilePath)
 
-non-team-authors: $(authorsFilePath)
+non-team-authors: $(listOfAuthorsReportFilePath)
 ifeq ($(teamMapFile),)
 	$(error teamMapFile not specified. Aborting)
 endif
-	bash -c 'diff <(cat "$(teamMapFile)" | tail +2 | cut -d',' -f1 | sort --ignore-case | uniq) <(cat "$(authorsFilePath)") || echo > /dev/null # Suppress failure' | grep '^>' | cut -d' ' -f2- | less
+	bash -c 'diff <(cat "$(teamMapFile)" | tail +2 | cut -d',' -f1 | sort --ignore-case | uniq) <(cat "$(listOfAuthorsReportFilePath)") || echo > /dev/null # Suppress failure' | grep '^>' | cut -d' ' -f2- | less
 
 change-summary: $(fileChangesLogFilePath) $(teamMapFilePath)
 ifdef groups
@@ -303,10 +302,7 @@ $(repositoryFileChangesLogFilePaths): $(analysesDirectoryPath)/%/$(fileChangesLo
 	mkdir -p "$(@D)"
 	git -C "$(repositoriesDirectoryPath)/$*" log "$$(scripts/get-repository-mainline-branch-name.sh "$(makefileDirectoryPath)/$(repositoriesDirectoryPath)/$*")" --numstat --date=short --pretty=format:'--%h--%ad--%aN' --no-renames --after="$(from)" --before=="$(to)" > "$@"
 
-$(listOfAuthorsReportFilePath): $(authorsFilePath)
-	cat $(authorsFilePath) > "$@"
-
-$(authorsFilePath): $(repositoryAuthorsFilePaths) | validate-date-range-parameters
+$(listOfAuthorsReportFilePath): $(repositoryAuthorsFilePaths) | validate-date-range-parameters
 	mkdir -p "$(@D)"
 	cat $(repositoryAuthorsFilePaths) | sort --ignore-case | uniq > "$@"
 
