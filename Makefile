@@ -232,18 +232,22 @@ endif
 endif
 
 $(entityOwnershipReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
+	mkdir -p "$(@D)"
 	$(maatCommand) -a entity-ownership > "$@"
 
 $(entityEffortReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
+	mkdir -p "$(@D)"
 	$(maatCommand) -a entity-effort > "$@"
 
 $(mainDevEntitiesReportFilePath): $(mainDevsReportFilePath)
 ifndef mainDev
 	$(error mainDev not specified. Aborting)
 endif
+	mkdir -p "$(@D)"
 	echo "$$(head -1 "$(mainDevsReportFilePath)" && grep ",$(mainDev)," "$(mainDevsReportFilePath)" | sort -n -r -t, -k6  || printf '')" > "$@"
 
 $(mainDevsReportFilePath): $(mainDevReportFilePath) $(refactoringMainDevReportFilePath)
+	mkdir -p "$(@D)"
 	echo "entity,change-type,main-dev,changed,total-changed,ownership\n$$( echo "$$(tail +2 "$(mainDevReportFilePath)" | sed 's/,/,added,/')\n$$(tail +2 "$(refactoringMainDevReportFilePath)" | sed 's/,/,removed,/')" | sort )" > "$@"
 
 $(mainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
@@ -255,9 +259,11 @@ $(refactoringMainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFileP
 	$(maatCommand) -a refactoring-main-dev > "$@"
 
 $(couplingReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
+	mkdir -p "$(@D)"
 	$(maatCommand) -a coupling --min-revs $(minRevisions) --min-coupling $(minCoupling) --min-shared-revs $(minSharedRevisions) $(maatCouplingTemporalPeriodOption) > "$@"
 
 $(sumOfCouplingReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
+	mkdir -p "$(@D)"
 	$(maatCommand) -a soc > "$@"
 
 $(fragmentationEnclosureDiagramFilePath): $(fragmentationReportFilePath) $(linesOfCodeReportFilePath)
@@ -273,6 +279,7 @@ $(hotspotEnclosureDiagramFilePath): $(changeFrequencyReportFilePath) $(linesOfCo
 	scripts/generate-heatmap-enclosure-diagram.sh "$(linesOfCodeReportFilePath)" "$(changeFrequencyReportFilePath)" > "$@"
 
 $(hotspotsReportFilePath): $(changeFrequencyReportFilePath) $(linesOfCodeReportFilePath)
+	mkdir -p "$(@D)"
 	python maat-scripts/merge/merge_comp_freqs.py "$(changeFrequencyReportFilePath)" "$(linesOfCodeReportFilePath)" > "$@"
 
 $(changeFrequencyReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
@@ -301,6 +308,7 @@ endif
 	scripts/cloc.sh "$(repositoriesDirectoryPath)/$*" "$(clocParameters)" > "$@"
 
 $(authorsReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
+	mkdir -p "$(@D)"
 	$(maatCommand) -a authors > "$@"
 
 $(indentationReportFilePath): $(repositoryDirectoryPaths) | validate-file-parameter
@@ -326,6 +334,7 @@ $(changeSummaryReportFilePath): $(fileChangesLogFilePath) $(teamMapFilePath)
 ifdef groups
 	$(error change summary report does not support grouping)
 endif
+	mkdir -p "$(@D)"
 	$(maatCommand) -a summary > "$@"
 
 $(fileChangesLogFilePath): $(repositoryFileChangesLogFilePaths) | validate-date-range-parameters
