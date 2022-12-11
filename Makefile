@@ -86,6 +86,7 @@ communicationReportFilePath:=$(analysisDirectoryPath)/communication-report.csv
 sumOfCouplingReportFilePath:=$(analysisDirectoryPath)/sum-of-coupling.csv
 couplingReportFilePath:=$(analysisDirectoryPath)/coupling.csv
 authorsReportFilePath:=$(analysisDirectoryPath)/authors.csv
+indentationTrendReportFilePath:=$(analysisDirectoryPath)/indentation-trend.csv
 knowledgeMapDiagramDirectoryPath:=$(analysisDirectoryPath)/$(knowledgeMapId)
 knowledgeMapDiagramFilePath:=$(knowledgeMapDiagramDirectoryPath)/knowledge-map-diagram.html
 
@@ -208,11 +209,8 @@ endif
 	scripts/checkout-repository-on-mainline.sh "$(makefileDirectoryPath)/$(repositoryDirectoryPaths)"
 	python maat-scripts/miner/complexity_analysis.py "$(repositoryDirectoryPaths)/$(file)"
 
-indentation-trend: validate-date-range-parameters validate-file-parameter $(repositoryDirectoryPaths)
-ifneq ($(numberOfRepositories), 1)
-	$(error only one repository can be specified for this operation)
-endif
-	cd "$(repositoryDirectoryPaths)" && python "$(makefileDirectoryPath)/maat-scripts/miner/git_complexity_trend.py" --start $(shell git -C "$(repositoryDirectoryPaths)" log "$$(scripts/get-repository-mainline-branch-name.sh "$(makefileDirectoryPath)/$(repositoryDirectoryPaths)")" --after=$(from) --pretty=format:%h --reverse | head -1) --end $(shell git -C "$(repositoryDirectoryPaths)" log "$$(scripts/get-repository-mainline-branch-name.sh "$(makefileDirectoryPath)/$(repositoryDirectoryPaths)")" --before=$(to) --pretty=format:%h -1) --file "$(file)" | tee "$(makefileDirectoryPath)/$(analysisDirectoryPath)/indentation-trend.csv" | less
+indentation-trend: $(indentationTrendReportFilePath)
+	less "$(indentationTrendReportFilePath)"
 
 $(knowledgeMapDiagramFilePath): $(mainDevReportFilePath) $(linesOfCodeReportFilePath) $(authorColorsFilePath)
 	mkdir -p "$(@D)"
@@ -307,6 +305,13 @@ endif
 
 $(authorsReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
 	$(maatCommand) -a authors > "$@"
+
+$(indentationTrendReportFilePath): $(repositoryDirectoryPaths) | validate-date-range-parameters validate-file-parameter
+ifneq ($(numberOfRepositories), 1)
+	$(error only one repository can be specified for this operation)
+endif
+	mkdir -p "$(@D)"
+	cd "$(repositoryDirectoryPaths)" && python "$(makefileDirectoryPath)/maat-scripts/miner/git_complexity_trend.py" --start $(shell git -C "$(repositoryDirectoryPaths)" log "$$(scripts/get-repository-mainline-branch-name.sh "$(makefileDirectoryPath)/$(repositoryDirectoryPaths)")" --after=$(from) --pretty=format:%h --reverse | head -1) --end $(shell git -C "$(repositoryDirectoryPaths)" log "$$(scripts/get-repository-mainline-branch-name.sh "$(makefileDirectoryPath)/$(repositoryDirectoryPaths)")" --before=$(to) --pretty=format:%h -1) --file "$(file)" > "$(makefileDirectoryPath)/$@"
 
 $(maatGroupsFilePath):
 	mkdir -p "$(@D)"
