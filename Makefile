@@ -68,6 +68,7 @@ analysisDirectoryPath:=$(analysesDirectoryPath)/$(analysisId)
 fileChangesLogFilePath:=$(analysisDirectoryPath)/$(fileChangesLogFileName)
 listOfAuthorsReportFilePath:=$(analysisDirectoryPath)/list-of-authors.csv
 linesOfCodeReportFilePath:=$(analysisDirectoryPath)/lines-of-code-report.csv
+changeSummaryReportFilePath:=$(analysisDirectoryPath)/change-summary.csv
 changeFrequencyReportFilePath:=$(analysisDirectoryPath)/change-frequency-report.csv
 entityOwnershipReportFilePath:=$(analysisDirectoryPath)/entity-ownership.csv
 entityEffortReportFilePath:=$(analysisDirectoryPath)/entity-effort.csv
@@ -140,11 +141,8 @@ ifeq ($(teamMapFile),)
 endif
 	bash -c 'diff <(cat "$(teamMapFile)" | tail +2 | cut -d',' -f1 | sort --ignore-case | uniq) <(cat "$(listOfAuthorsReportFilePath)") || echo > /dev/null # Suppress failure' | grep '^>' | cut -d' ' -f2- | less
 
-change-summary: $(fileChangesLogFilePath) $(teamMapFilePath)
-ifdef groups
-	$(error change summary report does not support grouping)
-endif
-	$(maatCommand) -a summary | tee "$(analysisDirectoryPath)/change-summary.csv" | less
+change-summary: $(changeSummaryReportFilePath)
+	less $(changeSummaryReportFilePath)
 
 file-changes: $(fileChangesLogFilePath)
 	less "$(fileChangesLogFilePath)"
@@ -293,6 +291,12 @@ endif
 $(maatGroupsFilePath):
 	mkdir -p "$(@D)"
 	sed 's/; */\n/g' <<< '$(groups)' > "$@"
+
+$(changeSummaryReportFilePath): $(fileChangesLogFilePath) $(teamMapFilePath)
+ifdef groups
+	$(error change summary report does not support grouping)
+endif
+	$(maatCommand) -a summary > "$@"
 
 $(fileChangesLogFilePath): $(repositoryFileChangesLogFilePaths) | validate-date-range-parameters
 	mkdir -p "$(@D)"
