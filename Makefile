@@ -69,6 +69,7 @@ fileChangesLogFilePath:=$(analysisDirectoryPath)/$(fileChangesLogFileName)
 authorsFilePath:=$(analysisDirectoryPath)/$(authorsFileName)
 linesOfCodeReportFilePath:=$(analysisDirectoryPath)/lines-of-code-report.csv
 changeFrequencyReportFilePath:=$(analysisDirectoryPath)/change-frequency-report.csv
+entityOwnershipReportFilePath:=$(analysisDirectoryPath)/entity-ownership.csv
 mainDevsReportFilePath:=$(analysisDirectoryPath)/main-devs.csv
 mainDevReportFilePath:=$(analysisDirectoryPath)/main-dev.csv
 refactoringMainDevReportFilePath:=$(analysisDirectoryPath)/refactoring-main-dev.csv
@@ -196,8 +197,8 @@ endif
 $(mainDevsReportFilePath): $(mainDevReportFilePath) $(refactoringMainDevReportFilePath)
 	echo "entity,change-type,main-dev,changed,total-changed,ownership\n$$( echo "$$(tail +2 "$(mainDevReportFilePath)" | sed 's/,/,added,/')\n$$(tail +2 "$(refactoringMainDevReportFilePath)" | sed 's/,/,removed,/')" | sort )" | tee $(analysisDirectoryPath)/main-devs.csv | less
 
-entity-ownership: $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
-	$(maatCommand) -a entity-ownership | tee "$(analysisDirectoryPath)/entity-ownership.csv" | less
+entity-ownership: $(entityOwnershipReportFilePath)
+	less "$(entityOwnershipReportFilePath)"
 
 indentation: validate-file-parameter $(repositoryDirectoryPaths)
 ifneq ($(numberOfRepositories), 1)
@@ -233,6 +234,9 @@ endif
 	echo 'author,color' > "$@"
 	tr ';' '\n' <<< "${authorColors}" | sed -E 's/^ +| ?(,) ?| +$$/\1/g' | grep -v "^$$" | sort | uniq >> "$@"
 endif
+
+$(entityOwnershipReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
+	$(maatCommand) -a entity-ownership > "$@"
 
 $(mainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
 	mkdir -p "$(@D)"
