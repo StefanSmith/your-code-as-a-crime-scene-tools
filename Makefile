@@ -1,6 +1,6 @@
 .DELETE_ON_ERROR:
 
-.PHONEY: clean clean-analyses validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership entity-effort indentation indentation-trend fetch-source list-of-authors non-team-authors knowledge-map main-dev-entities fragmentation fragmentation-table communication communication-table file-changes
+.PHONEY: clean clean-analyses validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership entity-effort indentation indentation-trend fetch-source list-of-authors non-team-authors knowledge-map main-dev-entities fragmentation fragmentation-table communication communication-table file-changes author-entities
 
 port=9000
 minRevisions=5
@@ -70,6 +70,7 @@ listOfAuthorsReportFilePath:=$(analysisDirectoryPath)/list-of-authors.csv
 linesOfCodeReportFilePath:=$(analysisDirectoryPath)/lines-of-code-report.csv
 changeSummaryReportFilePath:=$(analysisDirectoryPath)/change-summary.csv
 changeFrequencyReportFilePath:=$(analysisDirectoryPath)/change-frequency-report.csv
+authorEntitiesReportFilePath:=$(analysisDirectoryPath)/author-entities.csv
 entityOwnershipReportFilePath:=$(analysisDirectoryPath)/entity-ownership.csv
 entityEffortReportFilePath:=$(analysisDirectoryPath)/entity-effort.csv
 mainDevsReportFilePath:=$(analysisDirectoryPath)/main-devs.csv
@@ -200,6 +201,9 @@ main-dev-entities: $(mainDevEntitiesReportFilePath)
 entity-ownership: $(entityOwnershipReportFilePath)
 	less "$(entityOwnershipReportFilePath)"
 
+author-entities: $(authorEntitiesReportFilePath)
+	less "$(authorEntitiesReportFilePath)"
+
 entity-effort: $(entityEffortReportFilePath)
 	less "$(entityEffortReportFilePath)"
 
@@ -230,6 +234,14 @@ endif
 	echo 'author,color' > "$@"
 	tr ';' '\n' <<< "${authorColors}" | sed -E 's/^ +| ?(,) ?| +$$/\1/g' | grep -v "^$$" | sort | uniq >> "$@"
 endif
+
+$(authorEntitiesReportFilePath): $(entityOwnershipReportFilePath)
+ifndef author
+	$(error author not specified. Aborting)
+endif
+	mkdir -p "$(@D)"
+	echo entity,author,added,deleted,total > "$@"
+	grep ',$(author),' "$(entityOwnershipReportFilePath)" | awk -F, '{ total=$$3+$$4; print $$1 "," $$2 "," $$3 "," $$4 "," total }' | sort -n -r -t, -k5 >> "$@"
 
 $(entityOwnershipReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
 	mkdir -p "$(@D)"
