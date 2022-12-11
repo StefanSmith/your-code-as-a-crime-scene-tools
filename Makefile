@@ -82,6 +82,7 @@ fragmentationEnclosureDiagramFilePath:=$(analysisDirectoryPath)/fragmentation-en
 fragmentationReportFilePath:=$(analysisDirectoryPath)/fragmentation-report.csv
 communicationDiagramFilePath:=$(analysisDirectoryPath)/communication-diagram.html
 communicationReportFilePath:=$(analysisDirectoryPath)/communication-report.csv
+sumOfCouplingReportFilePath:=$(analysisDirectoryPath)/sum-of-coupling.csv
 knowledgeMapDiagramDirectoryPath:=$(analysisDirectoryPath)/$(knowledgeMapId)
 knowledgeMapDiagramFilePath:=$(knowledgeMapDiagramDirectoryPath)/knowledge-map-diagram.html
 
@@ -172,8 +173,8 @@ knowledge-map: $(knowledgeMapDiagramFilePath)
 change-frequency: $(changeFrequencyReportFilePath)
 	less "$(changeFrequencyReportFilePath)"
 
-sum-of-coupling: $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
-	$(maatCommand) -a soc | tee "$(analysisDirectoryPath)/sum-of-coupling.csv" | less
+sum-of-coupling: $(sumOfCouplingReportFilePath)
+	less "$(sumOfCouplingReportFilePath)"
 
 ifdef couplingDays
 maatCouplingTemporalPeriodOption:=--temporal-period $(couplingDays)
@@ -251,6 +252,9 @@ $(mainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(team
 $(refactoringMainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
 	mkdir -p "$(@D)"
 	$(maatCommand) -a refactoring-main-dev > "$@"
+
+$(sumOfCouplingReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
+	$(maatCommand) -a soc > "$@"
 
 $(fragmentationEnclosureDiagramFilePath): $(fragmentationReportFilePath) $(linesOfCodeReportFilePath)
 	mkdir -p "$(@D)"
