@@ -67,6 +67,7 @@ repositoryLinesOfCodeReportFilePaths:=$(shell cut -d',' -f5 "$(repositoryTableFi
 analysisDirectoryPath:=$(analysesDirectoryPath)/$(analysisId)
 fileChangesLogFilePath:=$(analysisDirectoryPath)/$(fileChangesLogFileName)
 authorsFilePath:=$(analysisDirectoryPath)/$(authorsFileName)
+listOfAuthorsReportFilePath:=$(analysisDirectoryPath)/list-of-authors.csv
 linesOfCodeReportFilePath:=$(analysisDirectoryPath)/lines-of-code-report.csv
 changeFrequencyReportFilePath:=$(analysisDirectoryPath)/change-frequency-report.csv
 entityOwnershipReportFilePath:=$(analysisDirectoryPath)/entity-ownership.csv
@@ -131,8 +132,8 @@ endif
 
 fetch-source: $(repositoryDirectoryPaths)
 
-list-of-authors: $(authorsFilePath)
-	cat $(authorsFilePath) | tee "$(analysisDirectoryPath)/list-of-authors.csv" | less
+list-of-authors: $(listOfAuthorsReportFilePath)
+	less $(listOfAuthorsReportFilePath)
 
 non-team-authors: $(authorsFilePath)
 ifeq ($(teamMapFile),)
@@ -301,6 +302,9 @@ $(fileChangesLogFilePath): $(repositoryFileChangesLogFilePaths) | validate-date-
 $(repositoryFileChangesLogFilePaths): $(analysesDirectoryPath)/%/$(fileChangesLogFileName): | validate-date-range-parameters $(repositoriesDirectoryPath)/%
 	mkdir -p "$(@D)"
 	git -C "$(repositoriesDirectoryPath)/$*" log "$$(scripts/get-repository-mainline-branch-name.sh "$(makefileDirectoryPath)/$(repositoriesDirectoryPath)/$*")" --numstat --date=short --pretty=format:'--%h--%ad--%aN' --no-renames --after="$(from)" --before=="$(to)" > "$@"
+
+$(listOfAuthorsReportFilePath): $(authorsFilePath)
+	cat $(authorsFilePath) > "$@"
 
 $(authorsFilePath): $(repositoryAuthorsFilePaths) | validate-date-range-parameters
 	mkdir -p "$(@D)"
