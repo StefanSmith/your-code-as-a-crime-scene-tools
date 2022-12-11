@@ -229,7 +229,7 @@ Reports the number of lines added and removed by per entity (file or group), per
 Useful for investigating who the authors are and whether they have used multiple different aliases that should be merged in the log of file changes.
 
 ### `author-entities`
-Filters output of `entity-ownership` for single author specified by required `author` parameter and adds an additional column for total number of lines changed. Sorts entities (files or groups) by total number of lines changed.  
+Filters output of `entity-ownership` for single author specified by required `author` parameter, removes the author column and adds an additional column for total number of lines changed. Sorts entities (files or groups) by total number of lines changed.
 
 ### `entity-effort`
 Similar to `entity-ownership` but reports the number of commits by per entity (file or group), per author.

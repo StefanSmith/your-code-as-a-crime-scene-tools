@@ -240,8 +240,8 @@ ifndef author
 	$(error author not specified. Aborting)
 endif
 	mkdir -p "$(@D)"
-	echo entity,author,added,deleted,total > "$@"
-	grep ',$(author),' "$(entityOwnershipReportFilePath)" | awk -F, '{ total=$$3+$$4; print $$1 "," $$2 "," $$3 "," $$4 "," total }' | sort -n -r -t, -k5 >> "$@"
+	echo entity,added,deleted,total > "$@"
+	grep ',$(author),' "$(entityOwnershipReportFilePath)" | awk -F, '{ total=$$3+$$4; print $$1 "," $$3 "," $$4 "," total }' | sort -n -r -t, -k5 >> "$@"
 
 $(entityOwnershipReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
 	mkdir -p "$(@D)"
