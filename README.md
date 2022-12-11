@@ -224,9 +224,12 @@ Removed lines is an approximate indication of the most prolific refactorer. This
 Shows the entities (files or groups) for which the specified `mainDev` is the author who has added or removed the most lines. This filters the results from [`main-devs`](#main-devs) and sorts by descending % author contribution.
 
 ### `entity-ownership`
-Reports the number of lines added and removed by per file, per author.
+Reports the number of lines added and removed by per entity (file or group), per author.
 
 Useful for investigating who the authors are and whether they have used multiple different aliases that should be merged in the log of file changes.
+
+### `entity-effort`
+Similar to `entity-ownership` but reports the number of commits by per entity (file or group), per author.
 
 ### `fragmentation`
 Opens an interactive "circle packing" diagram showing code files, with highlighted red hotspots. The larger the circle, the more lines of code (a rough proxy for complexity). The darker the circle, the greater the number of contributors (correlates with deminishing quality and higher defect rate).

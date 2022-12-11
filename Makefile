@@ -1,6 +1,6 @@
 .DELETE_ON_ERROR:
 
-.PHONEY: clean clean-analyses validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership indentation indentation-trend fetch-source list-of-authors non-team-authors knowledge-map main-dev-entities fragmentation fragmentation-table communication communication-table file-changes
+.PHONEY: clean clean-analyses validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership entity-effort indentation indentation-trend fetch-source list-of-authors non-team-authors knowledge-map main-dev-entities fragmentation fragmentation-table communication communication-table file-changes
 
 port=9000
 minRevisions=5
@@ -70,6 +70,7 @@ authorsFilePath:=$(analysisDirectoryPath)/$(authorsFileName)
 linesOfCodeReportFilePath:=$(analysisDirectoryPath)/lines-of-code-report.csv
 changeFrequencyReportFilePath:=$(analysisDirectoryPath)/change-frequency-report.csv
 entityOwnershipReportFilePath:=$(analysisDirectoryPath)/entity-ownership.csv
+entityEffortReportFilePath:=$(analysisDirectoryPath)/entity-effort.csv
 mainDevsReportFilePath:=$(analysisDirectoryPath)/main-devs.csv
 mainDevReportFilePath:=$(analysisDirectoryPath)/main-dev.csv
 refactoringMainDevReportFilePath:=$(analysisDirectoryPath)/refactoring-main-dev.csv
@@ -200,6 +201,9 @@ $(mainDevsReportFilePath): $(mainDevReportFilePath) $(refactoringMainDevReportFi
 entity-ownership: $(entityOwnershipReportFilePath)
 	less "$(entityOwnershipReportFilePath)"
 
+entity-effort: $(entityEffortReportFilePath)
+	less "$(entityEffortReportFilePath)"
+
 indentation: validate-file-parameter $(repositoryDirectoryPaths)
 ifneq ($(numberOfRepositories), 1)
 	$(error only one repository can be specified for this operation)
@@ -237,6 +241,9 @@ endif
 
 $(entityOwnershipReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
 	$(maatCommand) -a entity-ownership > "$@"
+
+$(entityEffortReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
+	$(maatCommand) -a entity-effort > "$@"
 
 $(mainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
 	mkdir -p "$(@D)"
