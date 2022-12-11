@@ -73,6 +73,7 @@ changeFrequencyReportFilePath:=$(analysisDirectoryPath)/change-frequency-report.
 entityOwnershipReportFilePath:=$(analysisDirectoryPath)/entity-ownership.csv
 entityEffortReportFilePath:=$(analysisDirectoryPath)/entity-effort.csv
 mainDevsReportFilePath:=$(analysisDirectoryPath)/main-devs.csv
+mainDevEntitiesReportFilePath:=$(analysisDirectoryPath)/$(mainDev)-entities.csv
 mainDevReportFilePath:=$(analysisDirectoryPath)/main-dev.csv
 refactoringMainDevReportFilePath:=$(analysisDirectoryPath)/refactoring-main-dev.csv
 maatGroupsFilePath:=$(analysisDirectoryPath)/maat-groups.txt
@@ -191,14 +192,8 @@ authors: $(authorsReportFilePath)
 main-devs: $(mainDevsReportFilePath)
 	less "$(mainDevsReportFilePath)"
 
-main-dev-entities: $(mainDevsReportFilePath)
-ifndef mainDev
-	$(error mainDev not specified. Aborting)
-endif
-	echo "$$(head -1 "$(mainDevsReportFilePath)" && grep ",$(mainDev)," "$(mainDevsReportFilePath)" | sort -n -r -t, -k6  || printf '')" | tee $(analysisDirectoryPath)/$(mainDev)-entities.csv | less
-
-$(mainDevsReportFilePath): $(mainDevReportFilePath) $(refactoringMainDevReportFilePath)
-	echo "entity,change-type,main-dev,changed,total-changed,ownership\n$$( echo "$$(tail +2 "$(mainDevReportFilePath)" | sed 's/,/,added,/')\n$$(tail +2 "$(refactoringMainDevReportFilePath)" | sed 's/,/,removed,/')" | sort )" > "$@"
+main-dev-entities: $(mainDevEntitiesReportFilePath)
+	less "$(mainDevEntitiesReportFilePath)"
 
 entity-ownership: $(entityOwnershipReportFilePath)
 	less "$(entityOwnershipReportFilePath)"
@@ -246,6 +241,15 @@ $(entityOwnershipReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath
 
 $(entityEffortReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
 	$(maatCommand) -a entity-effort > "$@"
+
+$(mainDevEntitiesReportFilePath): $(mainDevsReportFilePath)
+ifndef mainDev
+	$(error mainDev not specified. Aborting)
+endif
+	echo "$$(head -1 "$(mainDevsReportFilePath)" && grep ",$(mainDev)," "$(mainDevsReportFilePath)" | sort -n -r -t, -k6  || printf '')" > "$@"
+
+$(mainDevsReportFilePath): $(mainDevReportFilePath) $(refactoringMainDevReportFilePath)
+	echo "entity,change-type,main-dev,changed,total-changed,ownership\n$$( echo "$$(tail +2 "$(mainDevReportFilePath)" | sed 's/,/,added,/')\n$$(tail +2 "$(refactoringMainDevReportFilePath)" | sed 's/,/,removed,/')" | sort )" > "$@"
 
 $(mainDevReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
 	mkdir -p "$(@D)"
