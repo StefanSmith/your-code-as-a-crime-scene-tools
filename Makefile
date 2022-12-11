@@ -84,6 +84,7 @@ communicationDiagramFilePath:=$(analysisDirectoryPath)/communication-diagram.htm
 communicationReportFilePath:=$(analysisDirectoryPath)/communication-report.csv
 sumOfCouplingReportFilePath:=$(analysisDirectoryPath)/sum-of-coupling.csv
 couplingReportFilePath:=$(analysisDirectoryPath)/coupling.csv
+authorsReportFilePath:=$(analysisDirectoryPath)/authors.csv
 knowledgeMapDiagramDirectoryPath:=$(analysisDirectoryPath)/$(knowledgeMapId)
 knowledgeMapDiagramFilePath:=$(knowledgeMapDiagramDirectoryPath)/knowledge-map-diagram.html
 
@@ -184,8 +185,8 @@ endif
 coupling: $(couplingReportFilePath)
 	less "$(couplingReportFilePath)"
 
-authors: $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
-	$(maatCommand) -a authors | tee "$(analysisDirectoryPath)/authors.csv" | less
+authors: $(authorsReportFilePath)
+	less "$(authorsReportFilePath)"
 
 main-devs: $(mainDevsReportFilePath)
 	less "$(mainDevsReportFilePath)"
@@ -299,6 +300,9 @@ endif
 	mkdir -p "$(@D)"
 	scripts/checkout-repository-at-date.sh "$(to)" "$(makefileDirectoryPath)/$(repositoriesDirectoryPath)/$*"
 	scripts/cloc.sh "$(repositoriesDirectoryPath)/$*" "$(clocParameters)" > "$@"
+
+$(authorsReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
+	$(maatCommand) -a authors > "$@"
 
 $(maatGroupsFilePath):
 	mkdir -p "$(@D)"
