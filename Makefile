@@ -1,6 +1,6 @@
 .DELETE_ON_ERROR:
 
-.PHONEY: clean clean-analyses validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership entity-effort indentation indentation-trend fetch-source list-of-authors non-team-authors knowledge-map main-dev-entities fragmentation fragmentation-table communication communication-table file-changes author-entities
+.PHONEY: clean clean-analyses validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership entity-effort indentation indentation-trend fetch-source list-of-authors non-team-authors knowledge-map main-dev-entities fragmentation fragmentation-table communication communication-table file-changes author-entities-table
 
 port=9000
 minRevisions=5
@@ -201,7 +201,7 @@ main-dev-entities: $(mainDevEntitiesReportFilePath)
 entity-ownership: $(entityOwnershipReportFilePath)
 	less "$(entityOwnershipReportFilePath)"
 
-author-entities: $(authorEntitiesReportFilePath)
+author-entities-table: $(authorEntitiesReportFilePath)
 	less "$(authorEntitiesReportFilePath)"
 
 entity-effort: $(entityEffortReportFilePath)
