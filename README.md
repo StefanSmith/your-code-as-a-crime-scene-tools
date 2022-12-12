@@ -231,6 +231,11 @@ Useful for investigating who the authors are and whether they have used multiple
 ### `author-entities-table`
 Filters output of `entity-ownership` for single author specified by required `author` parameter, removes the author column and adds an additional column for total number of lines changed. Sorts entities (files or groups) by total number of lines changed.
 
+### `author-entities`
+Opens an interactive "circle packing" diagram showing code files, with highlighted red hotspots. The larger the circle, the more lines of code (a rough proxy for complexity). The darker the circle, the greater the total number of lines of code changed (added and removed) by the specified `author`.
+
+As with the [hotspots](#hotspots) recipe, you must specify the `langs` parameter.
+
 ### `entity-effort`
 Similar to `entity-ownership` but reports the number of commits by per entity (file or group), per author.
 

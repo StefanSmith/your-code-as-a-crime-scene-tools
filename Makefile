@@ -1,6 +1,6 @@
 .DELETE_ON_ERROR:
 
-.PHONEY: clean clean-analyses validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership entity-effort indentation indentation-trend fetch-source list-of-authors non-team-authors knowledge-map main-dev-entities fragmentation fragmentation-table communication communication-table file-changes author-entities-table
+.PHONEY: clean clean-analyses validate-date-range-parameters validate-file-parameter change-summary hotspots hotspots-table change-frequency sum-of-coupling coupling authors main-devs entity-ownership entity-effort indentation indentation-trend fetch-source list-of-authors non-team-authors knowledge-map main-dev-entities fragmentation fragmentation-table communication communication-table file-changes author-entities-table author-entities
 
 port=9000
 minRevisions=5
@@ -81,6 +81,7 @@ maatGroupsFilePath:=$(analysisDirectoryPath)/maat-groups.txt
 hotspotsReportFilePath:=$(analysisDirectoryPath)/hotspots.csv
 hotspotEnclosureDiagramFilePath:=$(analysisDirectoryPath)/hotspot-enclosure-diagram.html
 fragmentationEnclosureDiagramFilePath:=$(analysisDirectoryPath)/fragmentation-enclosure-diagram.html
+authorEntitiesEnclosureDiagramFilePath:=$(analysisDirectoryPath)/author-entities-enclosure-diagram.html
 fragmentationReportFilePath:=$(analysisDirectoryPath)/fragmentation-report.csv
 communicationDiagramFilePath:=$(analysisDirectoryPath)/communication-diagram.html
 communicationReportFilePath:=$(analysisDirectoryPath)/communication-report.csv
@@ -201,6 +202,9 @@ main-dev-entities: $(mainDevEntitiesReportFilePath)
 entity-ownership: $(entityOwnershipReportFilePath)
 	less "$(entityOwnershipReportFilePath)"
 
+author-entities: $(authorEntitiesEnclosureDiagramFilePath)
+	open "$(makefileDirectoryPath)/$(authorEntitiesEnclosureDiagramFilePath)"
+
 author-entities-table: $(authorEntitiesReportFilePath)
 	less "$(authorEntitiesReportFilePath)"
 
@@ -234,6 +238,10 @@ endif
 	echo 'author,color' > "$@"
 	tr ';' '\n' <<< "${authorColors}" | sed -E 's/^ +| ?(,) ?| +$$/\1/g' | grep -v "^$$" | sort | uniq >> "$@"
 endif
+
+$(authorEntitiesEnclosureDiagramFilePath): $(authorEntitiesReportFilePath) $(linesOfCodeReportFilePath)
+	mkdir -p "$(@D)"
+	scripts/generate-heatmap-enclosure-diagram.sh "$(linesOfCodeReportFilePath)" "$(authorEntitiesReportFilePath)" 3 > "$@"
 
 $(authorEntitiesReportFilePath): $(entityOwnershipReportFilePath)
 ifndef author
