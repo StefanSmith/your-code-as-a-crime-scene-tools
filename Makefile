@@ -241,7 +241,7 @@ ifndef author
 endif
 	mkdir -p "$(@D)"
 	echo entity,added,deleted,total > "$@"
-	grep ',$(author),' "$(entityOwnershipReportFilePath)" | awk -F, '{ total=$$3+$$4; print $$1 "," $$3 "," $$4 "," total }' | sort -n -r -t, -k5 >> "$@"
+	grep ',$(author),' "$(entityOwnershipReportFilePath)" | awk -F, '{ total=$$3+$$4; print $$1 "," $$3 "," $$4 "," total }' | sort -n -r -t, -k4 >> "$@"
 
 $(entityOwnershipReportFilePath): $(maatGroupsFilePath) $(fileChangesLogFilePath) $(teamMapFilePath)
 	mkdir -p "$(@D)"
